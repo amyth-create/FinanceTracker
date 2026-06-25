@@ -8,13 +8,20 @@ Built as a personal project with the help of Google Gemini.
 
 ## Features
 
-- **Dashboard** — total balance, income vs spending for the month, and the latest transactions at a glance
+- **Dashboard** — a gradient balance hero, a month selector to browse any month, and at-a-glance insight cards:
+  - **Lifestyle spend** — Food + Shopping + Fun combined, with its share of the month's spending, so discretionary outlay is obvious
+  - **Insights** — top category, spend vs last month (colour-coded), daily average, and projected month-end total
+  - **Recurring & subscriptions** — automatically detects repeating payments (same category + note across 3+ months) and estimates the next date
 - **Add transaction** — pick income or expense, choose a category, set the amount, date, and an optional note
-- **Transactions list** — full history with filter chips (All / Expenses / Income) and tap-to-delete
-- **Reports** — last-6-months bar chart, category breakdown with percentage bars, monthly snapshot, and savings rate
-- **Categories** — 14 default expense categories and 7 default income categories, all editable; add fully custom categories with your own emoji + colour
-- **Defaults seeded automatically** — first launch populates the database so the app is usable immediately
-- **Offline-first** — everything is stored locally in `finance_tracker.db`; the app requests no internet permission
+- **Transactions list** — full history **grouped under date headers** with a per-day net total, filter chips (All / Expenses / Income), and tap-to-delete
+- **CSV import / export** — export your history and re-import it (or another app's data); unknown categories are created automatically
+- **Reports** — interactive, tap anything to read exact figures:
+  - **Single month** or **compare two months** side-by-side (category-by-category difference in € and %)
+  - **Category donut** (tap a slice), a **monthly bar chart** with value labels, and a **balance-over-time trend line** across your whole history
+- **Future payments (Planned)** — jot down a payment you plan to make on a future date; **tick it off when you actually pay** and it logs a real transaction (dated today) that flows into your totals, charts, and history. Un-ticking removes it
+- **Reminders** — a notification on the morning of a planned payment's date (survives reboots)
+- **Categories** — 13 default expense + 7 default income categories, all editable; add custom categories with your own emoji + colour
+- **Offline-first** — everything is stored locally in `finance_tracker.db`; no internet permission, no ads, no tracking
 
 ---
 
@@ -36,13 +43,15 @@ Built as a personal project with the help of Google Gemini.
 
 ## Screens
 
-The app is a single Activity with bottom navigation between four destinations:
+The app is a single Activity with bottom navigation between five destinations:
 
-- `DashboardFragment` — summary tiles + recent transactions
-- `TransactionsFragment` — full filterable history
-- `AddTransactionFragment` — entry form (opened via the central + button)
-- `ReportsFragment` — charts + category breakdown
+- `DashboardFragment` — balance hero, month selector, insight cards, recurring detection, recent transactions
+- `TransactionsFragment` — full history grouped by day, with filters and CSV import/export
+- `ReportsFragment` — interactive donut, trend line, monthly bars, and single/compare modes
+- `PlannedFragment` — future payments you can tick off into real transactions
 - `CategoriesFragment` — manage default and custom categories
+
+`AddTransactionFragment` is the entry form, opened via the central **+** button.
 
 ---
 
@@ -54,16 +63,23 @@ app/src/main/
 │   ├── data/
 │   │   ├── Transaction.kt          Room @Entity
 │   │   ├── Category.kt             Room @Entity + default seed lists
+│   │   ├── PlannedPayment.kt       Room @Entity for future payments
 │   │   ├── TransactionDao.kt
 │   │   ├── CategoryDao.kt
-│   │   ├── AppDatabase.kt          Room DB, seeds defaults on first create
+│   │   ├── PlannedPaymentDao.kt
+│   │   ├── AppDatabase.kt          Room DB (v2), seeds defaults, v1→v2 migration
 │   │   └── Repository.kt           Single source of truth for the app
+│   ├── notify/
+│   │   ├── ReminderScheduler.kt    Schedules/cancels planned-payment alarms
+│   │   ├── ReminderReceiver.kt     Posts the reminder notification
+│   │   └── BootReceiver.kt         Re-schedules reminders after reboot
 │   ├── ui/
 │   │   ├── MainActivity.kt
-│   │   ├── dashboard/              DashboardFragment + ViewModel
-│   │   ├── transactions/           List + Adapter + ViewModel
+│   │   ├── dashboard/              Insights, lifestyle, recurring + ViewModel
+│   │   ├── transactions/           Grouped list + adapters + CSV import/export
 │   │   ├── add/                    AddTransactionFragment + ViewModel
-│   │   ├── reports/                Charts + ViewModel
+│   │   ├── reports/                Interactive charts + ViewModel
+│   │   ├── planned/                Future payments screen + adapter + ViewModel
 │   │   └── categories/             Manage categories + Adapter + ViewModel
 │   └── util/
 │       └── Formatters.kt           Currency + date helpers
@@ -145,18 +161,20 @@ Out of the box this renders amounts as Euros (€). Change the `Locale` to suit 
 
 ## Data and privacy
 
-All data is stored locally in a SQLite database file named `finance_tracker.db`, inside the app's private storage on the device. Nothing is sent off-device. The app declares no internet, location, or storage permissions.
+All data is stored locally in a SQLite database file named `finance_tracker.db`, inside the app's private storage on the device. Nothing is sent off-device — the app declares no internet permission.
 
-Uninstalling the app deletes the database. There is currently no built-in import/export — that's an obvious next feature.
+The only permissions used are `POST_NOTIFICATIONS` (to show planned-payment reminders) and `RECEIVE_BOOT_COMPLETED` (to restore reminders after a reboot). CSV export/import goes through the system share/file-picker, so you stay in control of where data goes.
+
+Uninstalling the app deletes the database. The app database is at schema **version 2**; upgrading from an older build runs a migration that adds the `planned_payments` table without touching existing data.
 
 ---
 
 ## Roadmap / nice-to-haves
 
-- CSV / JSON export and import
-- Budgets and per-category limits
-- Recurring transactions
-- Dark theme polish
+- Budgets and per-category limits with progress rings
+- Search + advanced filters (date range, amount) across transactions
+- Configurable reminder time (e.g. the evening before)
+- Surface upcoming planned payments on the Dashboard
 - Cloud backup (optional, opt-in)
 
 PRs and ideas welcome.
