@@ -14,5 +14,37 @@
         <item name="android:navigationBarColor">@color/bg_card</item>
         <item name="android:textColorPrimary">@color/text_primary</item>
         <item name="android:textColorSecondary">@color/text_secondary</item>
+
+        <!-- Dark theming for pop-up dialogs and the date picker -->
+        <item name="alertDialogTheme">@style/FinanceDialog</item>
+        <item name="android:alertDialogTheme">@style/FinanceDialog</item>
+        <item name="android:datePickerDialogTheme">@style/FinanceDatePicker</item>
+    </style>
+
+    <!-- AlertDialogs (delete confirms, import summary, "Plan a payment", etc.) -->
+    <style name="FinanceDialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/dialog_bg</item>
+        <item name="android:colorBackground">@color/bg_card</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="buttonBarPositiveButtonStyle">@style/FinanceDialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/FinanceDialogButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/FinanceDialogButton</item>
+    </style>
+
+    <style name="FinanceDialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/accent</item>
+    </style>
+
+    <!-- Date picker dialog -->
+    <style name="FinanceDatePicker" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">@drawable/dialog_bg</item>
+        <item name="android:colorBackground">@color/bg_card</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
     </style>
 </resources>

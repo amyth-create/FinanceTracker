@@ -1,6 +1,6 @@
 package com.personal.financetracker.ui.categories
 
-import android.app.AlertDialog
+import androidx.appcompat.app.AlertDialog
 import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
