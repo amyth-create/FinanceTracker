@@ -92,56 +92,6 @@ app/src/main/
     └── values/                     colors.xml, strings.xml, themes.xml
 ```
 
----
-
-## Getting the code
-
-```bash
-git clone https://github.com/<your-username>/FinanceTracker.git
-cd FinanceTracker
-```
-
----
-
-## Build and run from Android Studio
-
-1. **Install Android Studio** — https://developer.android.com/studio
-2. **Open the project** — File → Open → select the `FinanceTracker` folder (do not use *New Project*)
-3. **Wait for Gradle sync** — first sync downloads all dependencies (1–3 minutes). Wait until the status bar reads *Gradle sync finished*.
-4. **Pick a device:**
-   - **Physical phone:** enable Developer Options (Settings → About Phone → tap *Build Number* 7 times), turn on **USB Debugging**, plug the phone into your computer, and accept the debug prompt
-   - **Emulator:** Tools → Device Manager → create any virtual device with API 26+
-5. **Press the green ▶ Run button.** Android Studio builds, installs, and launches the app.
-
----
-
-## Build a shareable APK (for friends)
-
-If you'd rather hand a friend an installable file than have them open Android Studio:
-
-```bash
-# from the project root
-./gradlew assembleDebug
-```
-
-The APK lands at:
-
-```
-app/build/outputs/apk/debug/app-debug.apk
-```
-
-Send that file. To install it, the receiver needs to:
-
-1. Copy `app-debug.apk` to their Android phone (USB, email, Drive, whatever)
-2. Open it from the file manager
-3. Approve the *Install from unknown sources* prompt for that file manager
-4. Tap **Install**
-
-> Debug APKs are signed with the auto-generated debug key, which is fine for personal use. To publish on the Play Store you'd need to generate a release keystore and switch the build type to `release`.
-
-You can also publish the APK as a **Release** on GitHub (Releases → Draft a new release → attach `app-debug.apk`) so anyone can download it from the repo page.
-
----
 
 ## Customising
 
@@ -168,14 +118,6 @@ The only permissions used are `POST_NOTIFICATIONS` (to show planned-payment remi
 Uninstalling the app deletes the database. The app database is at schema **version 2**; upgrading from an older build runs a migration that adds the `planned_payments` table without touching existing data.
 
 ---
-
-## Roadmap / nice-to-haves
-
-- Budgets and per-category limits with progress rings
-- Search + advanced filters (date range, amount) across transactions
-- Configurable reminder time (e.g. the evening before)
-- Surface upcoming planned payments on the Dashboard
-- Cloud backup (optional, opt-in)
 
 PRs and ideas welcome.
 
