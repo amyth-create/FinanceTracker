@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingHorizontal="16dp"
+            android:paddingTop="28dp" android:paddingBottom="8dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Future payments" android:textColor="@color/text_primary"
+                android:textSize="22sp" android:textStyle="bold"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Plan ahead, tick off when paid"
+                android:textColor="@color/text_muted" android:textSize="13sp" android:layout_marginBottom="14dp"/>
+
+            <!-- Upcoming total -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="horizontal" android:gravity="center_vertical"
+                android:background="@drawable/card_bordered" android:padding="16dp"
+                android:layout_marginBottom="12dp">
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Planned (upcoming)" android:textColor="@color/text_muted" android:textSize="11sp"/>
+                    <TextView android:id="@+id/tv_planned_total"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="€0.00" android:textColor="@color/accent" android:textSize="20sp" android:textStyle="bold"/>
+                </LinearLayout>
+                <TextView android:id="@+id/tv_planned_count"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="0 items" android:textColor="@color/text_secondary" android:textSize="12sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_planned"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingHorizontal="16dp"
+            android:clipToPadding="false"
+            android:paddingBottom="90dp"/>
+
+        <LinearLayout android:id="@+id/empty_state"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:orientation="vertical" android:gravity="center"
+            android:visibility="gone">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="🗓️" android:textSize="44sp" android:layout_marginBottom="10dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="No planned payments" android:textColor="@color/text_secondary" android:textSize="15sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="Tap + to plan a future payment" android:textColor="@color/text_muted"
+                android:textSize="13sp" android:layout_marginTop="4dp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add_planned"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="20dp"
+        android:src="@drawable/ic_add"
+        app:backgroundTint="@color/accent"
+        app:tint="@color/on_accent"
+        app:elevation="8dp"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

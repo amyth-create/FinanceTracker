@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0A0A0F</color>
+    <color name="bg_card">#13131A</color>
+    <color name="bg_elevated">#1C1C26</color>
+
+    <!-- Teal accent -->
+    <color name="accent">#1FC8A8</color>
+    <color name="accent_dark">#0E8C73</color>
+    <color name="accent_dim">#221FC8A8</color>
+    <color name="on_accent">#04261E</color>
+
+    <color name="income">#2DD4A0</color>
+    <color name="income_dim">#1A2DD4A0</color>
+    <color name="expense">#FF5C7A</color>
+    <color name="expense_dim">#1AFF5C7A</color>
+    <color name="text_primary">#F0EEE9</color>
+    <color name="text_secondary">#8A8799</color>
+    <color name="text_muted">#4A4859</color>
+    <color name="border">#1F1F2E</color>
+    <color name="border_light">#2A2A3A</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+</resources>

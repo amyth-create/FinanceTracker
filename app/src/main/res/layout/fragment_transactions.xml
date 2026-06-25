@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:paddingHorizontal="16dp"
+            android:paddingTop="28dp" android:paddingBottom="8dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:text="Transactions"
+                    android:textColor="@color/text_primary"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="horizontal">
+
+                    <ImageButton
+                        android:id="@+id/btn_import"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_import"
+                        android:contentDescription="Import CSV"
+                        app:tint="@color/text_primary" />
+
+                    <ImageButton
+                        android:id="@+id/btn_export"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@android:drawable/ic_menu_share"
+                        android:contentDescription="Export CSV"
+                        app:tint="@color/text_primary" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <com.google.android.material.chip.ChipGroup
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp" app:singleSelection="true">
+                <com.google.android.material.chip.Chip android:id="@+id/chip_all"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="All" style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:textColor="@color/text_secondary" app:chipBackgroundColor="@color/bg_card"
+                    app:chipStrokeColor="@color/border" app:chipStrokeWidth="1dp"/>
+                <com.google.android.material.chip.Chip android:id="@+id/chip_expense"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="↓ Expenses" style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:textColor="@color/text_secondary" app:chipBackgroundColor="@color/bg_card"
+                    app:chipStrokeColor="@color/border" app:chipStrokeWidth="1dp"/>
+                <com.google.android.material.chip.Chip android:id="@+id/chip_income"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="↑ Income" style="@style/Widget.MaterialComponents.Chip.Filter"
+                    android:textColor="@color/text_secondary" app:chipBackgroundColor="@color/bg_card"
+                    app:chipStrokeColor="@color/border" app:chipStrokeWidth="1dp"/>
+            </com.google.android.material.chip.ChipGroup>
+
+            <TextView android:id="@+id/tv_count"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="0 transactions" android:textColor="@color/text_muted" android:textSize="11sp"
+                android:layout_marginBottom="8dp"/>
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_transactions"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingHorizontal="16dp"
+            android:clipToPadding="false"/>
+
+        <LinearLayout android:id="@+id/empty_state"
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:orientation="vertical" android:gravity="center"
+            android:visibility="gone">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="📋" android:textSize="44sp" android:layout_marginBottom="10dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="No transactions" android:textColor="@color/text_secondary" android:textSize="15sp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_add"
+        android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="20dp"
+        android:src="@drawable/ic_add"
+        app:backgroundTint="@color/accent"
+        app:elevation="8dp"/>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

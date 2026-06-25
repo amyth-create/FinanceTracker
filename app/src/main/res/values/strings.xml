@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Finance Tracker</string>
+    <string name="dashboard">Home</string>
+    <string name="transactions">Transactions</string>
+    <string name="reports">Reports</string>
+    <string name="categories">Categories</string>
+    <string name="add_transaction">Add Transaction</string>
+    <string name="total_balance">Total Balance</string>
+    <string name="income">Income</string>
+    <string name="expense">Expense</string>
+    <string name="recent">Recent</string>
+    <string name="see_all">See all →</string>
+    <string name="save">Save</string>
+    <string name="save_expense">Save Expense</string>
+    <string name="save_income">Save Income</string>
+    <string name="category_chip_format">%1$s %2$s</string>
+    <string name="cancel">Cancel</string>
+    <string name="vs_last_month">vs %1$s</string>
+    <string name="percentage_format">%1$s%2$d%%</string>
+    <string name="lifestyle_pct_spending">%1$d%% of spending</string>
+    <string name="recurring_next_due">≈ monthly · next %1$s</string>
+    <string name="approx_amount">≈ %1$s</string>
+    <string name="percentage_decimal_format">%.1f%%</string>
+    <string name="reports_header_format">%1$s · %2$s</string>
+    <string name="donut_hint">Tap a slice to see the category</string>
+    <string name="bar_hint">Tap a bar to see the month\'s total</string>
+    <string name="line_hint">Tap a point to see the balance</string>
+    <string name="chart_value_format">%1$s · %2$s</string>
+    <string name="pie_slice_format">%1$s · %2$s · %3$d%%</string>
+    <plurals name="transaction_count">
+        <item quantity="one">%1$d transaction</item>
+        <item quantity="other">%1$d transactions</item>
+    </plurals>
+    <plurals name="category_count">
+        <item quantity="one">%1$d category</item>
+        <item quantity="other">%1$d categories</item>
+    </plurals>
+    <plurals name="row_count">
+        <item quantity="one">%1$d row</item>
+        <item quantity="other">%1$d rows</item>
+    </plurals>
+    <string name="planned_status_format">%1$d upcoming · %2$d done</string>
+    <string name="delete_planned_title">Delete planned payment?</string>
+    <string name="delete_planned_message">This won\'t remove any transaction already logged.</string>
+    <string name="plan_payment_title">Plan a payment</string>
+    <string name="planned_item_subtitle">%1$s · %2$s</string>
+    <string name="add">Add</string>
+    <string name="delete">Delete</string>
+    <string name="no_transactions">No transactions yet\nTap + to add your first one</string>
+</resources>
