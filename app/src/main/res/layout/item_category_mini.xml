@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="8dp">
+
+    <TextView android:id="@+id/tv_emoji" style="@style/IconTile"
+        android:layout_width="36dp" android:layout_height="36dp" android:textSize="16sp" android:layout_marginEnd="12dp"/>
+
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+            <TextView android:id="@+id/tv_name" style="@style/Text.BodyBold"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:textSize="13sp" android:maxLines="1" android:ellipsize="end"/>
+            <TextView android:id="@+id/tv_pct" style="@style/Text.Muted"
+                android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginEnd="8dp"/>
+            <TextView android:id="@+id/tv_amount" style="@style/Text.BodyBold"
+                android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="13sp"/>
+        </LinearLayout>
+        <com.personal.financetracker.ui.common.RatioBarView android:id="@+id/bar"
+            android:layout_width="match_parent" android:layout_height="5dp" android:layout_marginTop="6dp"/>
+    </LinearLayout>
+</LinearLayout>

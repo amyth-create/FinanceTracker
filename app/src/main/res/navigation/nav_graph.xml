@@ -4,27 +4,23 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/dashboard">
 
+    <action android:id="@+id/action_global_add"
+        app:destination="@id/addTransaction"
+        app:enterAnim="@anim/slide_up" app:exitAnim="@anim/fade_out"
+        app:popEnterAnim="@anim/fade_in" app:popExitAnim="@anim/slide_down"/>
+
     <fragment android:id="@+id/dashboard"
         android:name="com.personal.financetracker.ui.dashboard.DashboardFragment"
         android:label="Home">
-        <action android:id="@+id/action_dashboard_to_add"
-            app:destination="@id/addTransaction"
-            app:enterAnim="@anim/slide_up"
-            app:exitAnim="@anim/fade_out"
-            app:popEnterAnim="@anim/fade_in"
-            app:popExitAnim="@anim/slide_down"/>
+        <action android:id="@+id/action_dashboard_to_settings"
+            app:destination="@id/settings"
+            app:enterAnim="@anim/fade_in" app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in" app:popExitAnim="@anim/fade_out"/>
     </fragment>
 
     <fragment android:id="@+id/transactions"
         android:name="com.personal.financetracker.ui.transactions.TransactionsFragment"
-        android:label="Transactions">
-        <action android:id="@+id/action_transactions_to_add"
-            app:destination="@id/addTransaction"
-            app:enterAnim="@anim/slide_up"
-            app:exitAnim="@anim/fade_out"
-            app:popEnterAnim="@anim/fade_in"
-            app:popExitAnim="@anim/slide_down"/>
-    </fragment>
+        android:label="Activity"/>
 
     <fragment android:id="@+id/reports"
         android:name="com.personal.financetracker.ui.reports.ReportsFragment"
@@ -34,6 +30,15 @@
         android:name="com.personal.financetracker.ui.planned.PlannedFragment"
         android:label="Planned"/>
 
+    <fragment android:id="@+id/settings"
+        android:name="com.personal.financetracker.ui.settings.SettingsFragment"
+        android:label="Settings">
+        <action android:id="@+id/action_settings_to_categories"
+            app:destination="@id/categories"
+            app:enterAnim="@anim/fade_in" app:exitAnim="@anim/fade_out"
+            app:popEnterAnim="@anim/fade_in" app:popExitAnim="@anim/fade_out"/>
+    </fragment>
+
     <fragment android:id="@+id/categories"
         android:name="com.personal.financetracker.ui.categories.CategoriesFragment"
         android:label="Categories"/>
@@ -41,10 +46,6 @@
     <fragment android:id="@+id/addTransaction"
         android:name="com.personal.financetracker.ui.add.AddTransactionFragment"
         android:label="Add Transaction">
-        <argument
-            android:name="transactionId"
-            app:argType="long"
-            android:defaultValue="0L" />
+        <argument android:name="transactionId" app:argType="long" android:defaultValue="0L"/>
     </fragment>
-
 </navigation>

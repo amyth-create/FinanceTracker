@@ -5,108 +5,69 @@
     android:layout_height="match_parent"
     android:background="@color/bg">
 
-    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
-        android:orientation="vertical">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
 
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:orientation="vertical" android:paddingHorizontal="16dp"
-            android:paddingTop="28dp" android:paddingBottom="8dp">
+            android:orientation="vertical" android:paddingHorizontal="@dimen/screen_padding" android:paddingTop="24dp">
 
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:text="Transactions"
-                    android:textColor="@color/text_primary"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:orientation="horizontal">
-
-                    <ImageButton
-                        android:id="@+id/btn_import"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="4dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_import"
-                        android:contentDescription="Import CSV"
-                        app:tint="@color/text_primary" />
-
-                    <ImageButton
-                        android:id="@+id/btn_export"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@android:drawable/ic_menu_share"
-                        android:contentDescription="Export CSV"
-                        app:tint="@color/text_primary" />
+            <FrameLayout android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginBottom="16dp">
+                <LinearLayout android:id="@+id/header_row" android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView style="@style/Text.ScreenTitle" android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="@string/activity"/>
+                    <ImageButton android:id="@+id/btn_search" style="@style/IconButton" android:src="@drawable/ic_search"
+                        android:contentDescription="@string/search_hint" android:layout_marginEnd="8dp"/>
+                    <ImageButton android:id="@+id/btn_more" style="@style/IconButton" android:src="@drawable/ic_more"
+                        android:contentDescription="More"/>
                 </LinearLayout>
-            </RelativeLayout>
+                <LinearLayout android:id="@+id/search_bar" android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/input_bg"
+                    android:paddingStart="14dp" android:paddingEnd="4dp" android:visibility="gone">
+                    <ImageView android:layout_width="18dp" android:layout_height="18dp" android:src="@drawable/ic_search"
+                        android:alpha="0.5" android:contentDescription="@null" android:layout_marginEnd="8dp"/>
+                    <EditText android:id="@+id/et_search" android:layout_width="0dp" android:layout_height="match_parent"
+                        android:layout_weight="1" android:background="@null" android:hint="@string/search_hint"
+                        android:textColor="@color/text_primary" android:textColorHint="@color/text_muted" android:textSize="15sp"
+                        android:inputType="text" android:imeOptions="actionSearch" android:maxLines="1"/>
+                    <ImageButton android:id="@+id/btn_close_search" android:layout_width="36dp" android:layout_height="36dp"
+                        android:src="@drawable/ic_close" android:background="?attr/selectableItemBackgroundBorderless"
+                        app:tint="@color/text_secondary" android:contentDescription="@string/cancel"/>
+                </LinearLayout>
+            </FrameLayout>
 
-            <com.google.android.material.chip.ChipGroup
-                android:layout_width="match_parent" android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp" app:singleSelection="true">
-                <com.google.android.material.chip.Chip android:id="@+id/chip_all"
-                    android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="All" style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:textColor="@color/text_secondary" app:chipBackgroundColor="@color/bg_card"
-                    app:chipStrokeColor="@color/border" app:chipStrokeWidth="1dp"/>
-                <com.google.android.material.chip.Chip android:id="@+id/chip_expense"
-                    android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="↓ Expenses" style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:textColor="@color/text_secondary" app:chipBackgroundColor="@color/bg_card"
-                    app:chipStrokeColor="@color/border" app:chipStrokeWidth="1dp"/>
-                <com.google.android.material.chip.Chip android:id="@+id/chip_income"
-                    android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="↑ Income" style="@style/Widget.MaterialComponents.Chip.Filter"
-                    android:textColor="@color/text_secondary" app:chipBackgroundColor="@color/bg_card"
-                    app:chipStrokeColor="@color/border" app:chipStrokeWidth="1dp"/>
-            </com.google.android.material.chip.ChipGroup>
-
-            <TextView android:id="@+id/tv_count"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="0 transactions" android:textColor="@color/text_muted" android:textSize="11sp"
-                android:layout_marginBottom="8dp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                <com.google.android.material.chip.ChipGroup android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" app:singleSelection="true" app:selectionRequired="true" app:chipSpacingHorizontal="6dp">
+                    <com.google.android.material.chip.Chip android:id="@+id/chip_all" style="@style/FilterChip"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/all"/>
+                    <com.google.android.material.chip.Chip android:id="@+id/chip_expense" style="@style/FilterChip"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/expenses"/>
+                    <com.google.android.material.chip.Chip android:id="@+id/chip_income" style="@style/FilterChip"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/income"/>
+                </com.google.android.material.chip.ChipGroup>
+                <TextView android:id="@+id/tv_count" style="@style/Text.Muted"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0 transactions"/>
+            </LinearLayout>
         </LinearLayout>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_transactions"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:paddingHorizontal="16dp"
-            android:clipToPadding="false"/>
-
-        <LinearLayout android:id="@+id/empty_state"
-            android:layout_width="match_parent" android:layout_height="match_parent"
-            android:orientation="vertical" android:gravity="center"
-            android:visibility="gone">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="📋" android:textSize="44sp" android:layout_marginBottom="10dp"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="No transactions" android:textColor="@color/text_secondary" android:textSize="15sp"/>
-        </LinearLayout>
+        <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+            <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_transactions"
+                android:layout_width="match_parent" android:layout_height="match_parent"
+                android:paddingHorizontal="@dimen/screen_padding" android:paddingBottom="96dp" android:clipToPadding="false"/>
+            <LinearLayout android:id="@+id/empty_state" android:layout_width="match_parent" android:layout_height="match_parent"
+                android:orientation="vertical" android:gravity="center" android:visibility="gone">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📋" android:textSize="44sp" android:layout_marginBottom="10dp"/>
+                <TextView android:id="@+id/tv_empty_title" style="@style/Text.Body" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/no_transactions" android:textColor="@color/text_secondary"/>
+                <TextView android:id="@+id/tv_empty_sub" style="@style/Text.Muted" android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/tap_plus_to_add" android:layout_marginTop="4dp"/>
+            </LinearLayout>
+        </FrameLayout>
     </LinearLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_add"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton android:id="@+id/fab_add"
         android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="20dp"
-        android:src="@drawable/ic_add"
-        app:backgroundTint="@color/accent"
-        app:elevation="8dp"/>
-
+        android:layout_gravity="bottom|end" android:layout_margin="20dp"
+        android:src="@drawable/ic_add" app:backgroundTint="@color/accent" app:tint="@color/on_accent"
+        app:elevation="8dp" android:contentDescription="@string/add_transaction"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

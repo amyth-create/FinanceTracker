@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <!-- Summary -->
+    <LinearLayout style="@style/Card" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/row_gap">
+        <TextView style="@style/Text.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/this_period_net"/>
+        <TextView android:id="@+id/tv_net" style="@style/Text.Hero"
+            android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp"/>
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="8dp">
+            <TextView android:id="@+id/tv_savings" style="@style/Text.Caption"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:background="@drawable/pill_accent_soft" android:textColor="@color/accent" android:textStyle="bold"
+                android:paddingHorizontal="10dp" android:paddingVertical="5dp"/>
+            <TextView android:id="@+id/tv_net_delta" style="@style/Text.Caption"
+                android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp"/>
+        </LinearLayout>
+
+        <com.personal.financetracker.ui.common.RatioBarView android:id="@+id/bar_flow"
+            android:layout_width="match_parent" android:layout_height="10dp" android:layout_marginTop="18dp"/>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginTop="12dp">
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                <TextView style="@style/Text.Muted" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/income"/>
+                <TextView android:id="@+id/tv_flow_income" style="@style/Text.Stat"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="18sp" android:textColor="@color/income"/>
+            </LinearLayout>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:gravity="end">
+                <TextView style="@style/Text.Muted" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/spending"/>
+                <TextView android:id="@+id/tv_flow_expense" style="@style/Text.Stat"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="18sp" android:textColor="@color/expense"/>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Sankey -->
+    <LinearLayout style="@style/Card" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/row_gap">
+        <TextView style="@style/Text.Section" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/where_money_went"/>
+        <TextView android:id="@+id/tv_sankey_sub" style="@style/Text.Muted" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="2dp" android:text="@string/where_money_went_sub"/>
+        <com.personal.financetracker.ui.common.SankeyView android:id="@+id/sankey"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"/>
+    </LinearLayout>
+
+    <!-- Income vs spending -->
+    <LinearLayout style="@style/Card" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/row_gap">
+        <TextView style="@style/Text.Section" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/income_vs_spending"/>
+        <TextView android:id="@+id/tv_cash_sub" style="@style/Text.Muted"
+            android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp"/>
+        <com.github.mikephil.charting.charts.BarChart android:id="@+id/chart_cashflow"
+            android:layout_width="match_parent" android:layout_height="190dp" android:layout_marginTop="10dp"/>
+        <TextView android:id="@+id/tv_cash_detail" style="@style/Text.Muted"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center"
+            android:layout_marginTop="4dp" android:textSize="11sp" android:text="@string/trend_hint"/>
+    </LinearLayout>
+
+    <!-- Balance -->
+    <LinearLayout style="@style/Card" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/row_gap">
+        <TextView style="@style/Text.Section" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/balance_over_time"/>
+        <TextView style="@style/Text.Muted" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="2dp" android:text="@string/balance_over_time_sub"/>
+        <com.github.mikephil.charting.charts.LineChart android:id="@+id/chart_balance"
+            android:layout_width="match_parent" android:layout_height="180dp" android:layout_marginTop="10dp"/>
+        <TextView android:id="@+id/tv_balance_detail" style="@style/Text.Muted"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center"
+            android:layout_marginTop="4dp" android:textSize="11sp"/>
+    </LinearLayout>
+</LinearLayout>

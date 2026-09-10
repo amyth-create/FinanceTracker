@@ -1,33 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Finance Tracker</string>
-    <string name="dashboard">Home</string>
-    <string name="transactions">Transactions</string>
-    <string name="reports">Reports</string>
-    <string name="categories">Categories</string>
-    <string name="add_transaction">Add Transaction</string>
-    <string name="total_balance">Total Balance</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_activity">Activity</string>
+    <string name="nav_reports">Reports</string>
+    <string name="nav_planned">Planned</string>
+
+    <!-- Generic -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="delete">Delete</string>
+    <string name="add">Add</string>
+    <string name="undo">Undo</string>
+    <string name="see_all">See all</string>
     <string name="income">Income</string>
     <string name="expense">Expense</string>
+    <string name="expenses">Expenses</string>
+    <string name="spending">Spending</string>
+    <string name="net">Net</string>
+    <string name="all">All</string>
+    <string name="none_dash">—</string>
+    <string name="empty_amount">€0.00</string>
+
+    <!-- Period picker -->
+    <string name="period_month">Month</string>
+    <string name="period_quarter">Quarter</string>
+    <string name="period_year">Year</string>
+    <string name="previous_period">Previous period</string>
+    <string name="next_period">Next period</string>
+
+    <!-- Home -->
+    <string name="total_balance">Total balance</string>
+    <string name="this_period_net">Net this period</string>
+    <string name="daily_average">Daily average</string>
+    <string name="projected">Projected</string>
+    <string name="vs_previous">vs previous</string>
+    <string name="top_category">Top category</string>
+    <string name="spending_by_category">Spending by category</string>
+    <string name="upcoming">Upcoming</string>
+    <string name="recurring">Recurring &amp; subscriptions</string>
     <string name="recent">Recent</string>
-    <string name="see_all">See all →</string>
-    <string name="save">Save</string>
-    <string name="save_expense">Save Expense</string>
-    <string name="save_income">Save Income</string>
-    <string name="category_chip_format">%1$s %2$s</string>
-    <string name="cancel">Cancel</string>
-    <string name="vs_last_month">vs %1$s</string>
-    <string name="percentage_format">%1$s%2$d%%</string>
-    <string name="lifestyle_pct_spending">%1$d%% of spending</string>
-    <string name="recurring_next_due">≈ monthly · next %1$s</string>
-    <string name="approx_amount">≈ %1$s</string>
-    <string name="percentage_decimal_format">%.1f%%</string>
-    <string name="reports_header_format">%1$s · %2$s</string>
-    <string name="donut_hint">Tap a slice to see the category</string>
-    <string name="bar_hint">Tap a bar to see the month\'s total</string>
-    <string name="line_hint">Tap a point to see the balance</string>
+    <string name="no_transactions_yet">No transactions yet</string>
+    <string name="tap_plus_to_add">Tap + to add your first one</string>
+    <string name="no_recurring">No recurring payments detected yet</string>
+    <string name="no_upcoming">Nothing planned in the next 30 days</string>
+    <string name="settings">Settings</string>
+    <string name="add_transaction">Add transaction</string>
+    <string name="edit_transaction">Edit transaction</string>
+
+    <!-- Reports -->
+    <string name="reports">Reports</string>
+    <string name="tab_spending">Spending</string>
+    <string name="tab_income">Income</string>
+    <string name="tab_cashflow">Cash flow</string>
+    <string name="total_spent">Total spent</string>
+    <string name="total_income">Total income</string>
+    <string name="per_day">per day</string>
+    <string name="per_transaction">per transaction</string>
+    <string name="transactions_label">transactions</string>
+    <string name="trend">Trend</string>
+    <string name="trend_hint">Tap a bar to jump to that period</string>
+    <string name="by_category">By category</string>
+    <string name="by_source">By source</string>
+    <string name="category_hint">Tap a category to see its transactions</string>
+    <string name="spending_pace">Spending pace</string>
+    <string name="spending_pace_sub">Cumulative this period vs. previous</string>
+    <string name="by_weekday">By day of week</string>
+    <string name="by_weekday_sub">Average spent per day</string>
+    <string name="top_notes">Top places &amp; notes</string>
+    <string name="largest_transactions">Largest transactions</string>
+    <string name="no_data_period">Nothing recorded in this period</string>
+    <string name="cashflow_summary">Cash flow</string>
+    <string name="savings_rate">Savings rate</string>
+    <string name="saved">Saved</string>
+    <string name="overspent">Overspent</string>
+    <string name="where_money_went">Where the money went</string>
+    <string name="where_money_went_sub">Income sources → spending categories</string>
+    <string name="income_vs_spending">Income vs. spending</string>
+    <string name="balance_over_time">Balance over time</string>
+    <string name="balance_over_time_sub">Cumulative net balance, all history</string>
+    <string name="compare_previous">Previous period</string>
+    <string name="compare_last_year">Same period last year</string>
+    <string name="compare_with">Compare with</string>
+    <string name="share_of_total">%1$d%% of total</string>
+    <string name="avg_per_period">avg %1$s</string>
+    <string name="category_new">new</string>
+    <string name="n_transactions">%1$d transactions</string>
+    <string name="category_history">Last 6 months</string>
     <string name="chart_value_format">%1$s · %2$s</string>
-    <string name="pie_slice_format">%1$s · %2$s · %3$d%%</string>
+
+    <!-- Transactions -->
+    <string name="activity">Activity</string>
+    <string name="search_hint">Search notes or categories</string>
+    <string name="import_csv">Import CSV</string>
+    <string name="export_csv">Export CSV</string>
+    <string name="transaction_deleted">Transaction deleted</string>
+    <string name="no_transactions">No transactions</string>
+    <string name="no_results">No matches</string>
+
+    <!-- Add -->
+    <string name="amount">Amount</string>
+    <string name="note_optional">Note (optional)</string>
+    <string name="note_hint">What was this for?</string>
+    <string name="date">Date</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+    <string name="pick_date">Pick…</string>
+    <string name="category">Category</string>
+    <string name="save_expense">Save expense</string>
+    <string name="save_income">Save income</string>
+    <string name="enter_valid_amount">Enter a valid amount</string>
+    <string name="select_category">Select a category</string>
+    <string name="delete_transaction_title">Delete transaction?</string>
+    <string name="cannot_undo">This cannot be undone.</string>
+
+    <!-- Planned -->
+    <string name="planned_title">Planned</string>
+    <string name="planned_subtitle">Plan ahead, tick off when paid</string>
+    <string name="planned_upcoming">Upcoming</string>
+    <string name="planned_done">Done</string>
+    <string name="planned_status_format">%1$d upcoming · %2$d done</string>
+    <string name="delete_planned_title">Delete planned payment?</string>
+    <string name="delete_planned_message">This won\'t remove any transaction already logged.</string>
+    <string name="plan_payment_title">Plan a payment</string>
+    <string name="planned_item_subtitle">%1$s · %2$s</string>
+    <string name="planned_deleted">Planned payment deleted</string>
+    <string name="no_planned">No planned payments</string>
+    <string name="tap_plus_to_plan">Tap + to plan a future payment</string>
+    <string name="due_today">Due today</string>
+    <string name="overdue">Overdue</string>
+    <string name="in_days">In %1$d days</string>
+    <string name="tomorrow">Tomorrow</string>
+
+    <!-- Categories -->
+    <string name="categories">Categories</string>
+    <string name="manage_categories">Manage your categories</string>
+    <string name="add_category">Add category</string>
+    <string name="new_category">New category</string>
+    <string name="edit_category">Edit category</string>
+    <string name="emoji">Emoji</string>
+    <string name="name">Name</string>
+    <string name="colour">Colour</string>
+    <string name="enter_name">Enter a name</string>
+    <string name="default_cannot_delete">Default categories can\'t be deleted</string>
+    <string name="delete_category_message">Existing transactions will keep this category label.</string>
+    <string name="default_badge">Default</string>
+
+    <!-- Settings -->
+    <string name="settings_data">Data</string>
+    <string name="settings_about">About</string>
+    <string name="settings_categories_sub">Edit names, emojis and colours</string>
+    <string name="settings_export_sub">Share your full history as a .csv file</string>
+    <string name="settings_import_sub">Load transactions from a .csv file</string>
+    <string name="settings_offline">Everything is stored on this device. No accounts, no internet, no tracking.</string>
+    <string name="settings_version">Version %1$s</string>
+
     <plurals name="transaction_count">
         <item quantity="one">%1$d transaction</item>
         <item quantity="other">%1$d transactions</item>
@@ -40,12 +169,4 @@
         <item quantity="one">%1$d row</item>
         <item quantity="other">%1$d rows</item>
     </plurals>
-    <string name="planned_status_format">%1$d upcoming · %2$d done</string>
-    <string name="delete_planned_title">Delete planned payment?</string>
-    <string name="delete_planned_message">This won\'t remove any transaction already logged.</string>
-    <string name="plan_payment_title">Plan a payment</string>
-    <string name="planned_item_subtitle">%1$s · %2$s</string>
-    <string name="add">Add</string>
-    <string name="delete">Delete</string>
-    <string name="no_transactions">No transactions yet\nTap + to add your first one</string>
 </resources>

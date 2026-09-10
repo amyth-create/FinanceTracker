@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:parentTag="android.widget.LinearLayout"
+    tools:orientation="horizontal">
+
+    <ImageButton android:id="@+id/btn_prev"
+        style="@style/IconButton"
+        android:src="@drawable/ic_chevron_left"
+        android:contentDescription="@string/previous_period"/>
+
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="1" android:orientation="vertical" android:gravity="center"
+        android:layout_gravity="center_vertical">
+        <TextView android:id="@+id/tv_label" style="@style/Text.Section"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textSize="17sp" android:text="September 2026"
+            android:background="?attr/selectableItemBackground"
+            android:paddingHorizontal="12dp" android:paddingVertical="4dp"/>
+        <TextView android:id="@+id/tv_sub" style="@style/Text.Muted"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textSize="11sp" android:text="Current month"/>
+    </LinearLayout>
+
+    <ImageButton android:id="@+id/btn_next"
+        style="@style/IconButton"
+        android:src="@drawable/ic_chevron_right"
+        android:contentDescription="@string/next_period"/>
+</merge>

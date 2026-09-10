@@ -1,21 +1,23 @@
 package com.personal.financetracker.ui.categories
 
-import androidx.appcompat.app.AlertDialog
-import android.graphics.Color
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.chip.Chip
 import com.personal.financetracker.R
 import com.personal.financetracker.data.Category
+import com.personal.financetracker.databinding.DialogEditCategoryBinding
 import com.personal.financetracker.databinding.FragmentCategoriesBinding
+import com.personal.financetracker.ui.common.dpInt
+import com.personal.financetracker.ui.common.parseColor
 
 class CategoriesFragment : Fragment() {
 
@@ -23,6 +25,12 @@ class CategoriesFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: CategoriesViewModel by viewModels()
     private lateinit var adapter: CategoryAdapter
+    private var currentType = "expense"
+
+    private val palette = listOf(
+        "#FF8C42", "#F0B429", "#4CAF82", "#2DD4A0", "#22D3EE", "#4A9EFF",
+        "#818CF8", "#A78BFA", "#E879F9", "#F472B6", "#FF5C7A", "#94A3B8",
+    )
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentCategoriesBinding.inflate(inflater, container, false)
@@ -31,111 +39,70 @@ class CategoriesFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        adapter = CategoryAdapter(
-            onEdit = { cat -> showEditDialog(cat) },
-            onDelete = { cat -> confirmDelete(cat) }
-        )
+        adapter = CategoryAdapter(onEdit = { showDialog(it) }, onDelete = { confirmDelete(it) })
         binding.rvCategories.layoutManager = LinearLayoutManager(requireContext())
         binding.rvCategories.adapter = adapter
 
-        binding.chipExpense.isChecked = true
-        var currentType = "expense"
-
-        fun filterAndShow(type: String) {
-            currentType = type
-            viewModel.allCategories.value?.let { all ->
-                adapter.submitList(all.filter { it.type == type })
-            }
-        }
-
-        binding.chipExpense.setOnClickListener { filterAndShow("expense") }
-        binding.chipIncome.setOnClickListener  { filterAndShow("income") }
-
-        binding.btnAddCategory.setOnClickListener { showAddDialog(currentType) }
-
-        viewModel.allCategories.observe(viewLifecycleOwner) {
-            filterAndShow(currentType)
-        }
+        binding.btnBack.setOnClickListener { findNavController().popBackStack() }
+        binding.segType.onSelected = { currentType = if (it == 0) "expense" else "income"; refresh() }
+        binding.btnAddCategory.setOnClickListener { showDialog(null) }
+        viewModel.allCategories.observe(viewLifecycleOwner) { refresh() }
     }
 
-    private fun showAddDialog(type: String) {
-        val layout = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(64, 32, 64, 0)
-        }
-        val etEmoji = EditText(requireContext()).apply { hint = "Emoji (e.g. 🎮)" }
-        val etName  = EditText(requireContext()).apply { hint = "Name" }
-        val etColor = EditText(requireContext()).apply { hint = "Color hex (e.g. #FF5733)" }
-        layout.addView(labelView("Emoji"))
-        layout.addView(etEmoji)
-        layout.addView(labelView("Name"))
-        layout.addView(etName)
-        layout.addView(labelView("Colour"))
-        layout.addView(etColor)
-
-        AlertDialog.Builder(requireContext())
-            .setTitle("New ${type.replaceFirstChar { it.uppercase() }} Category")
-            .setView(layout)
-            .setPositiveButton("Create") { _, _ ->
-                val emoji = etEmoji.text.toString().trim().ifEmpty { "📦" }
-                val name  = etName.text.toString().trim()
-                val color = etColor.text.toString().trim().ifEmpty { "#94A3B8" }
-                if (name.isEmpty()) { Toast.makeText(requireContext(), "Enter a name", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
-                viewModel.insert(Category(name = name, emoji = emoji, color = color, type = type))
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+    private fun refresh() {
+        viewModel.allCategories.value?.let { all -> adapter.submitList(all.filter { it.type == currentType }) }
     }
 
-    private fun showEditDialog(cat: Category) {
-        val layout = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(64, 32, 64, 0)
+    private fun showDialog(existing: Category?) {
+        val d = DialogEditCategoryBinding.inflate(layoutInflater)
+        var selectedColor = existing?.color ?: palette.first()
+        d.etEmoji.setText(existing?.emoji ?: "")
+        d.etName.setText(existing?.name ?: "")
+
+        val colors = if (existing != null && existing.color !in palette) listOf(existing.color) + palette else palette
+        colors.forEach { hex ->
+            val c = parseColor(hex)
+            val chip = Chip(requireContext()).apply {
+                text = "  "
+                isCheckable = true
+                isCheckedIconVisible = true
+                checkedIcon = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_check_circle)
+                checkedIconTint = ColorStateList.valueOf(0xFFFFFFFF.toInt())
+                chipBackgroundColor = ColorStateList.valueOf(c)
+                chipStrokeWidth = 0f
+                chipMinHeight = dpInt(36).toFloat()
+                chipStartPadding = dpInt(10).toFloat(); chipEndPadding = dpInt(10).toFloat()
+                isChecked = hex.equals(selectedColor, ignoreCase = true)
+                setOnCheckedChangeListener { _, checked -> if (checked) selectedColor = hex }
+            }
+            d.chipGroupColor.addView(chip)
         }
-        val etEmoji = EditText(requireContext()).apply { setText(cat.emoji) }
-        val etName  = EditText(requireContext()).apply { setText(cat.name) }
-        val etColor = EditText(requireContext()).apply { setText(cat.color) }
-        layout.addView(labelView("Emoji"))
-        layout.addView(etEmoji)
-        layout.addView(labelView("Name"))
-        layout.addView(etName)
-        layout.addView(labelView("Colour"))
-        layout.addView(etColor)
 
         AlertDialog.Builder(requireContext())
-            .setTitle("Edit Category")
-            .setView(layout)
-            .setPositiveButton("Save") { _, _ ->
-                val updated = cat.copy(
-                    emoji = etEmoji.text.toString().trim().ifEmpty { cat.emoji },
-                    name  = etName.text.toString().trim().ifEmpty { cat.name },
-                    color = etColor.text.toString().trim().ifEmpty { cat.color }
-                )
-                viewModel.update(updated)
+            .setTitle(if (existing == null) R.string.new_category else R.string.edit_category)
+            .setView(d.root)
+            .setPositiveButton(R.string.save) { _, _ ->
+                val name = d.etName.text.toString().trim()
+                if (name.isEmpty()) { Toast.makeText(requireContext(), R.string.enter_name, Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+                val emoji = d.etEmoji.text.toString().trim().ifEmpty { existing?.emoji ?: if (currentType == "income") "💫" else "📦" }
+                if (existing == null) {
+                    viewModel.insert(Category(name = name, emoji = emoji, color = selectedColor, type = currentType))
+                } else {
+                    viewModel.update(existing.copy(name = name, emoji = emoji, color = selectedColor))
+                }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
     private fun confirmDelete(cat: Category) {
-        if (cat.isDefault) {
-            Toast.makeText(requireContext(), "Default categories cannot be deleted", Toast.LENGTH_SHORT).show()
-            return
-        }
+        if (cat.isDefault) { Toast.makeText(requireContext(), R.string.default_cannot_delete, Toast.LENGTH_SHORT).show(); return }
         AlertDialog.Builder(requireContext())
             .setTitle("Delete \"${cat.name}\"?")
-            .setMessage("Existing transactions will keep this category label.")
-            .setPositiveButton("Delete") { _, _ -> viewModel.delete(cat) }
-            .setNegativeButton("Cancel", null)
+            .setMessage(R.string.delete_category_message)
+            .setPositiveButton(R.string.delete) { _, _ -> viewModel.delete(cat) }
+            .setNegativeButton(R.string.cancel, null)
             .show()
-    }
-
-    private fun labelView(text: String) = TextView(requireContext()).apply {
-        this.text = text
-        setTextColor(Color.parseColor("#8A8799"))
-        textSize = 12f
-        setPadding(0, 16, 0, 4)
     }
 
     override fun onDestroyView() {

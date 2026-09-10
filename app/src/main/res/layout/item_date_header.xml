@@ -4,16 +4,13 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingTop="18dp"
-    android:paddingBottom="6dp"
-    android:paddingHorizontal="4dp">
+    android:paddingTop="20dp"
+    android:paddingBottom="4dp">
 
-    <TextView android:id="@+id/tv_date"
-        android:layout_width="0dp" android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:textColor="@color/text_secondary" android:textSize="12sp" android:textStyle="bold"/>
+    <TextView android:id="@+id/tv_date" style="@style/Text.Overline"
+        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:textColor="@color/text_secondary"/>
 
-    <TextView android:id="@+id/tv_total"
-        android:layout_width="wrap_content" android:layout_height="wrap_content"
-        android:textColor="@color/text_muted" android:textSize="12sp" android:textStyle="bold"/>
+    <TextView android:id="@+id/tv_total" style="@style/Text.Muted"
+        android:layout_width="wrap_content" android:layout_height="wrap_content" android:textStyle="bold"/>
 </LinearLayout>

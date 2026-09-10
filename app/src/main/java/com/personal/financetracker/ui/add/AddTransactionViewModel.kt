@@ -14,11 +14,10 @@ class AddTransactionViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = Repository(AppDatabase.getDatabase(app))
 
     val expenseCategories = repo.getCategoriesByType("expense").asLiveData()
-    val incomeCategories  = repo.getCategoriesByType("income").asLiveData()
+    val incomeCategories = repo.getCategoriesByType("income").asLiveData()
 
     suspend fun getTransaction(id: Long) = repo.getTransactionById(id)
 
-    fun insert(transaction: Transaction) {
-        viewModelScope.launch { repo.insertTransaction(transaction) }
-    }
+    fun insert(transaction: Transaction) = viewModelScope.launch { repo.insertTransaction(transaction) }
+    fun delete(transaction: Transaction) = viewModelScope.launch { repo.deleteTransaction(transaction) }
 }

@@ -1,30 +1,34 @@
 package com.personal.financetracker.ui.reports
 
-import android.graphics.Color
+import android.graphics.DashPathEffect
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.core.content.ContextCompat
+import android.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import com.github.mikephil.charting.charts.PieChart
-import com.github.mikephil.charting.components.XAxis
+import androidx.navigation.fragment.findNavController
+import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import com.personal.financetracker.R
 import com.personal.financetracker.data.Transaction
 import com.personal.financetracker.databinding.FragmentReportsBinding
+import com.personal.financetracker.databinding.ItemCategoryRowBinding
+import com.personal.financetracker.databinding.ItemSimpleRowBinding
+import com.personal.financetracker.databinding.ItemStatTileBinding
+import com.personal.financetracker.databinding.ItemTransactionBinding
+import com.personal.financetracker.databinding.SectionBreakdownBinding
+import com.personal.financetracker.databinding.SectionCashflowBinding
+import com.personal.financetracker.domain.*
+import com.personal.financetracker.ui.common.*
+import com.personal.financetracker.ui.transactions.TransactionRow
 import com.personal.financetracker.util.Formatters
-import java.util.*
 import kotlin.math.abs
-import kotlin.math.roundToInt
 
 class ReportsFragment : Fragment() {
 
@@ -32,22 +36,10 @@ class ReportsFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: ReportsViewModel by viewModels()
 
-    /** A calendar month, 0-based month like Calendar.MONTH. */
-    private data class YearMonth(val year: Int, val month: Int)
+    private val bd: SectionBreakdownBinding get() = binding.breakdown
+    private val cf: SectionCashflowBinding get() = binding.cashflow
 
-    private var showingExpenses = true
-    private var compareMode = false
-
-    private var allTxs: List<Transaction> = emptyList()
-    private var availableMonths: List<YearMonth> = emptyList()
-
-    private var selectedMonth: YearMonth? = null
-    private var monthA: YearMonth? = null
-    private var monthB: YearMonth? = null
-
-    // For chart tap read-outs
-    private var donutTotal: Double = 0.0
-    private var lineLabels: List<String> = emptyList()
+    private var data: ReportData? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentReportsBinding.inflate(inflater, container, false)
@@ -56,537 +48,395 @@ class ReportsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setupCharts()
 
-        setupChart()
-        setupPie()
-        setupLine()
+        binding.periodPicker.onPrevious = { viewModel.previous() }
+        binding.periodPicker.onNext = { viewModel.next() }
+        binding.periodPicker.onLabelClick = { showGranularityMenu() }
+        binding.btnCompare.setOnClickListener { showCompareMenu() }
 
-        binding.toggleExpenses.setOnClickListener {
-            showingExpenses = true
-            applyToggleStyle()
-            renderSingle()
-            refreshChart()
+        binding.tabs.select(viewModel.tab)
+        binding.tabs.onSelected = { i -> viewModel.tab = i; data?.let { render(it) } }
+
+        viewModel.queryLive.observe(viewLifecycleOwner) { q ->
+            binding.periodPicker.bind(q.period)
+            binding.tvCompare.text = when (q.compareMode) {
+                CompareMode.PREVIOUS -> "vs previous ${q.period.noun}"
+                CompareMode.LAST_YEAR -> "vs last year"
+            }
         }
-        binding.toggleIncome.setOnClickListener {
-            showingExpenses = false
-            applyToggleStyle()
-            renderSingle()
-            refreshChart()
-        }
-
-        binding.segSingle.setOnClickListener { setMode(false) }
-        binding.segCompare.setOnClickListener { setMode(true) }
-
-        applyToggleStyle()
-        setMode(false)
-
-        viewModel.allTransactions.observe(viewLifecycleOwner) { txs ->
-            allTxs = txs
-            availableMonths = monthsFrom(txs)
-            ensureSelections()
-            buildAllChips()
-            renderSingle()
-            renderCompare()
-            updateLine(txs)
-        }
-
-        viewModel.last6Months.observe(viewLifecycleOwner) { updateChart(it) }
+        viewModel.report.observe(viewLifecycleOwner) { data = it; render(it) }
     }
 
-    // ---------- Mode handling ----------
+    // ---------- Menus ----------
 
-    private fun setMode(compare: Boolean) {
-        compareMode = compare
-        binding.containerSingle.visibility = if (compare) View.GONE else View.VISIBLE
-        binding.containerCompare.visibility = if (compare) View.VISIBLE else View.GONE
+    private fun showGranularityMenu() {
+        val pm = PopupMenu(requireContext(), binding.periodPicker, android.view.Gravity.CENTER)
+        pm.menu.add(0, 0, 0, getString(R.string.period_month))
+        pm.menu.add(0, 1, 1, getString(R.string.period_quarter))
+        pm.menu.add(0, 2, 2, getString(R.string.period_year))
+        pm.setOnMenuItemClickListener {
+            viewModel.setGranularity(Granularity.values()[it.itemId]); true
+        }
+        pm.show()
+    }
 
-        val sel = ContextCompat.getColor(requireContext(), R.color.black)
-        val unsel = ContextCompat.getColor(requireContext(), R.color.text_secondary)
-        if (compare) {
-            binding.segCompare.setBackgroundResource(R.drawable.seg_selected)
-            binding.segCompare.setTextColor(sel)
-            binding.segSingle.setBackgroundColor(Color.TRANSPARENT)
-            binding.segSingle.setTextColor(unsel)
+    private fun showCompareMenu() {
+        val q = viewModel.currentQuery()
+        val pm = PopupMenu(requireContext(), binding.btnCompare)
+        pm.menu.add(0, 0, 0, "Previous ${q.period.noun}")
+        pm.menu.add(0, 1, 1, getString(R.string.compare_last_year))
+        pm.setOnMenuItemClickListener {
+            viewModel.setCompareMode(if (it.itemId == 0) CompareMode.PREVIOUS else CompareMode.LAST_YEAR); true
+        }
+        pm.show()
+    }
+
+    // ---------- Render ----------
+
+    private fun render(d: ReportData) {
+        if (_binding == null) return
+        val tab = viewModel.tab
+        val showEmpty = !d.hasData && tab != 2
+        binding.emptyState.visible(showEmpty)
+        binding.breakdown.root.visible(tab != 2 && !showEmpty)
+        binding.cashflow.root.visible(tab == 2)
+        when (tab) {
+            0 -> if (!showEmpty) renderBreakdown(d, TYPE_EXPENSE)
+            1 -> if (!showEmpty) renderBreakdown(d, TYPE_INCOME)
+            else -> renderCashFlow(d)
+        }
+    }
+
+    private fun renderBreakdown(d: ReportData, type: String) {
+        val isExpense = type == TYPE_EXPENSE
+        val s = d.summary; val c = d.compareSummary
+        val total = if (isExpense) s.expense else s.income
+        val cmpTotal = if (isExpense) c.expense else c.income
+        val accent = requireContext().color(if (isExpense) R.color.expense else R.color.income)
+
+        bd.tvTotalLabel.text = getString(if (isExpense) R.string.total_spent else R.string.total_income)
+        bd.tvTotal.text = Formatters.formatAmount(total)
+
+        val diff = total - cmpTotal
+        val pct = Analytics.pctChange(total, cmpTotal)
+        if (cmpTotal == 0.0 && total == 0.0) {
+            bd.tvDelta.text = "—"; bd.tvDeltaSub.text = "no data to compare"
+            bd.tvDelta.setTextColor(requireContext().color(R.color.text_secondary))
+        } else if (diff == 0.0) {
+            bd.tvDelta.text = "No change"; bd.tvDeltaSub.text = "vs ${d.comparePeriod.label}"
+            bd.tvDelta.setTextColor(requireContext().color(R.color.text_secondary))
         } else {
-            binding.segSingle.setBackgroundResource(R.drawable.seg_selected)
-            binding.segSingle.setTextColor(sel)
-            binding.segCompare.setBackgroundColor(Color.TRANSPARENT)
-            binding.segCompare.setTextColor(unsel)
+            val arrow = if (diff >= 0) "▲" else "▼"
+            bd.tvDelta.text = "$arrow ${Formatters.formatSigned(diff)}" + (pct?.let { " (${Formatters.formatPct(it)})" } ?: "")
+            bd.tvDelta.applyDeltaColor(diff, higherIsGood = !isExpense)
+            bd.tvDeltaSub.text = "vs ${d.comparePeriod.label} · ${Formatters.formatAmount(cmpTotal)}"
         }
+
+        bindStat(bd.statPerDay, Formatters.formatAmount(if (isExpense) s.avgExpensePerDay else s.income / s.period.daysElapsed().coerceAtLeast(1)), getString(R.string.per_day))
+        bindStat(bd.statPerTx, Formatters.formatAmount(if (isExpense) s.avgExpensePerTx else s.avgIncomePerTx), getString(R.string.per_transaction))
+        bindStat(bd.statCount, (if (isExpense) s.expenseCount else s.incomeCount).toString(), getString(R.string.transactions_label))
+
+        renderTrend(d, type, accent)
+        renderCategories(if (isExpense) d.spendingCats else d.incomeCats, type, isExpense)
+
+        bd.cardPace.visible(isExpense && d.paceCurrent.isNotEmpty())
+        if (isExpense) renderPace(d)
+        bd.cardWeekday.visible(isExpense && d.weekdays.any { it.total > 0 })
+        if (isExpense) renderWeekday(d)
+
+        val notes = if (isExpense) d.topExpenseNotes else d.topIncomeNotes
+        bd.cardNotes.visible(notes.isNotEmpty())
+        renderNotes(notes)
+
+        val largest = if (isExpense) d.largestExpenses else d.largestIncome
+        bd.cardLargest.visible(largest.isNotEmpty())
+        renderLargest(largest)
     }
 
-    private fun applyToggleStyle() {
-        val active = if (showingExpenses)
-            ContextCompat.getColor(requireContext(), R.color.expense)
-        else ContextCompat.getColor(requireContext(), R.color.income)
-        val muted = ContextCompat.getColor(requireContext(), R.color.text_secondary)
-        binding.toggleExpenses.setTextColor(if (showingExpenses) active else muted)
-        binding.toggleIncome.setTextColor(if (!showingExpenses) active else muted)
+    private fun bindStat(tile: ItemStatTileBinding, value: String, label: String) {
+        tile.tvValue.text = value; tile.tvLabel.text = label
     }
 
-    // ---------- Months & chips ----------
+    // ---------- Trend ----------
 
-    private fun monthsFrom(txs: List<Transaction>): List<YearMonth> {
-        val set = LinkedHashSet<YearMonth>()
-        set.add(YearMonth(Formatters.currentYear(), Formatters.currentMonth()))
-        val cal = Calendar.getInstance()
-        txs.forEach {
-            cal.timeInMillis = it.date
-            set.add(YearMonth(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH)))
-        }
-        return set.sortedWith(
-            compareByDescending<YearMonth> { it.year }.thenByDescending { it.month }
-        )
-    }
+    private fun renderTrend(d: ReportData, type: String, accent: Int) {
+        val isExpense = type == TYPE_EXPENSE
+        val pts = d.trend
+        val avg = if (isExpense) d.avgExpenseBefore else d.avgIncomeBefore
+        bd.tvTrendSub.text = "Last ${pts.size} ${d.period.noun}s"
+        bd.tvTrendAvg.text = avg?.let { "avg ${Formatters.formatCompact(it)}" } ?: ""
+        bd.tvTrendAvg.visible(avg != null)
 
-    private fun ensureSelections() {
-        if (availableMonths.isEmpty()) {
-            selectedMonth = null; monthA = null; monthB = null; return
-        }
-        if (selectedMonth == null || selectedMonth !in availableMonths) {
-            selectedMonth = availableMonths.first()
-        }
-        if (monthA == null || monthA !in availableMonths) {
-            monthA = availableMonths.first()
-        }
-        if (monthB == null || monthB !in availableMonths) {
-            monthB = if (availableMonths.size > 1) availableMonths[1] else availableMonths.first()
-        }
-    }
-
-    private fun buildAllChips() {
-        buildMonthChips(binding.chipGroupMonths, selectedMonth) { ym ->
-            selectedMonth = ym; renderSingle()
-        }
-        buildMonthChips(binding.chipGroupA, monthA) { ym ->
-            monthA = ym; renderCompare()
-        }
-        buildMonthChips(binding.chipGroupB, monthB) { ym ->
-            monthB = ym; renderCompare()
-        }
-    }
-
-    private fun buildMonthChips(group: ChipGroup, selected: YearMonth?, onSelect: (YearMonth) -> Unit) {
-        group.removeAllViews()
-        val ctx = requireContext()
-        val strokePx = resources.displayMetrics.density * 1f
-        availableMonths.forEach { ym ->
-            val chip = Chip(ctx).apply {
-                text = Formatters.monthLabelShort(ym.year, ym.month)
-                isCheckable = true
-                isCheckedIconVisible = false
-                isClickable = true
-                chipBackgroundColor = ContextCompat.getColorStateList(ctx, R.color.month_chip_bg)
-                setTextColor(ContextCompat.getColorStateList(ctx, R.color.month_chip_text))
-                chipStrokeColor = ContextCompat.getColorStateList(ctx, R.color.month_chip_stroke)
-                chipStrokeWidth = strokePx
-                isChecked = (ym == selected)
-                setOnClickListener { onSelect(ym) }
-            }
-            group.addView(chip)
-        }
-    }
-
-    // ---------- Single month rendering ----------
-
-    private fun txsForMonth(ym: YearMonth): List<Transaction> {
-        val start = Formatters.monthStartFor(ym.year, ym.month)
-        val end = Formatters.monthEndFor(ym.year, ym.month)
-        return allTxs.filter { it.date in start..end }
-    }
-
-    private fun renderSingle() {
-        if (_binding == null) return
-        val ym = selectedMonth ?: return
-        val txs = txsForMonth(ym)
-        val income = txs.filter { it.type == "income" }.sumOf { it.amount }
-        val expense = txs.filter { it.type == "expense" }.sumOf { it.amount }
-        val savingsRate = if (income > 0) ((income - expense) / income * 100) else 0.0
-
-        binding.tvSelIncome.text = Formatters.formatAmount(income)
-        binding.tvSelExpense.text = Formatters.formatAmount(expense)
-        binding.tvSelNet.text = Formatters.formatAmount(income - expense)
-        binding.tvSavingsRate.text = if (income > 0) getString(R.string.percentage_decimal_format, savingsRate) else "—"
-
-        val typeLabel = if (showingExpenses) "Spending" else "Income"
-        binding.tvBreakdownTitle.text =
-            getString(R.string.reports_header_format, typeLabel, Formatters.monthLabelFull(ym.year, ym.month))
-
-        val type = if (showingExpenses) "expense" else "income"
-        val typed = txs.filter { it.type == type }
-        val colorByName = typed.associate { it.categoryName to it.categoryColor }
-        val catTotals = typed
-            .groupBy { it.categoryName }
-            .map { (name, items) ->
-                Triple(name, items.first().categoryEmoji, items.sumOf { it.amount })
-            }
-            .sortedByDescending { it.third }
-        val total = catTotals.sumOf { it.third }
-        buildCategoryBreakdown(catTotals, total, colorByName)
-        updateDonut(ym, catTotals, total, colorByName)
-    }
-
-    private fun buildCategoryBreakdown(
-        cats: List<Triple<String, String, Double>>,
-        total: Double,
-        colorByName: Map<String, String>
-    ) {
-        binding.llCategories.removeAllViews()
-        binding.tvCatEmpty.visibility = if (cats.isEmpty()) View.VISIBLE else View.GONE
-        val fallback = if (showingExpenses)
-            Color.parseColor("#FF5C7A") else Color.parseColor("#2DD4A0")
-        cats.forEach { (name, emoji, amount) ->
-            val pct = if (total > 0) (amount / total * 100) else 0.0
-            val row = layoutInflater.inflate(R.layout.item_category_stat, binding.llCategories, false)
-            row.findViewById<TextView>(R.id.tv_emoji).text = emoji
-            row.findViewById<TextView>(R.id.tv_name).text = name
-            row.findViewById<TextView>(R.id.tv_amount).text = Formatters.formatAmount(amount)
-            row.findViewById<TextView>(R.id.tv_pct).text = getString(R.string.percentage_decimal_format, pct)
-            val bar = row.findViewById<View>(R.id.view_bar)
-            val barColor = try { Color.parseColor(colorByName[name]) } catch (e: Exception) { fallback }
-            bar.setBackgroundColor(barColor)
-            bar.post {
-                bar.layoutParams.width = ((bar.parent as View).width * pct / 100).toInt()
-                bar.requestLayout()
-            }
-            binding.llCategories.addView(row)
-        }
-    }
-
-    // ---------- Compare rendering ----------
-
-    private fun renderCompare() {
-        if (_binding == null) return
-        val a = monthA ?: return
-        val b = monthB ?: return
-
-        val aLabel = Formatters.monthLabelShort(a.year, a.month)
-        val bLabel = Formatters.monthLabelShort(b.year, b.month)
-        binding.tvCmpALabel.text = aLabel
-        binding.tvCmpBLabel.text = bLabel
-        binding.tvCmpLegend.text = "● $aLabel    ● $bLabel    · change"
-
-        val expA = txsForMonth(a).filter { it.type == "expense" }
-        val expB = txsForMonth(b).filter { it.type == "expense" }
-        val totalA = expA.sumOf { it.amount }
-        val totalB = expB.sumOf { it.amount }
-        binding.tvCmpATotal.text = Formatters.formatAmount(totalA)
-        binding.tvCmpBTotal.text = Formatters.formatAmount(totalB)
-        binding.tvCmpDelta.text = totalsDeltaText(aLabel, bLabel, totalA, totalB)
-        binding.tvCmpDelta.setTextColor(deltaColor(totalB - totalA))
-
-        // Per-category union
-        val mapA = expA.groupBy { it.categoryName }
-        val mapB = expB.groupBy { it.categoryName }
-        val names = (mapA.keys + mapB.keys).toSet()
-
-        data class Row(val name: String, val emoji: String, val amtA: Double, val amtB: Double)
-        val rows = names.map { name ->
-            val itemsA = mapA[name].orEmpty()
-            val itemsB = mapB[name].orEmpty()
-            val emoji = (itemsA + itemsB).firstOrNull()?.categoryEmoji ?: ""
-            Row(name, emoji, itemsA.sumOf { it.amount }, itemsB.sumOf { it.amount })
-        }.sortedByDescending { maxOf(it.amtA, it.amtB) }
-
-        val maxVal = rows.maxOfOrNull { maxOf(it.amtA, it.amtB) } ?: 0.0
-
-        binding.llCompare.removeAllViews()
-        binding.tvCompareEmpty.visibility = if (rows.isEmpty()) View.VISIBLE else View.GONE
-
-        rows.forEach { r ->
-            val view = layoutInflater.inflate(R.layout.item_category_compare, binding.llCompare, false)
-            view.findViewById<TextView>(R.id.tv_emoji).text = r.emoji
-            view.findViewById<TextView>(R.id.tv_name).text = r.name
-            view.findViewById<TextView>(R.id.tv_amount_a).text = Formatters.formatAmount(r.amtA)
-            view.findViewById<TextView>(R.id.tv_amount_b).text = Formatters.formatAmount(r.amtB)
-
-            val diff = r.amtB - r.amtA
-            val delta = view.findViewById<TextView>(R.id.tv_delta)
-            delta.text = rowDeltaText(r.amtA, r.amtB)
-            delta.setTextColor(deltaColor(diff))
-
-            val barA = view.findViewById<View>(R.id.view_bar_a)
-            val barB = view.findViewById<View>(R.id.view_bar_b)
-            setBarWidth(barA, r.amtA, maxVal)
-            setBarWidth(barB, r.amtB, maxVal)
-
-            binding.llCompare.addView(view)
-        }
-    }
-
-    private fun setBarWidth(bar: View, amount: Double, maxVal: Double) {
-        bar.post {
-            val track = (bar.parent as View).width
-            val w = if (maxVal > 0) (track * amount / maxVal).toInt() else 0
-            bar.layoutParams.width = w
-            bar.requestLayout()
-        }
-    }
-
-    private fun totalsDeltaText(aLabel: String, bLabel: String, a: Double, b: Double): String {
-        if (a == 0.0 && b == 0.0) return "No spending in either month"
-        val diff = b - a
-        val money = Formatters.formatAmount(abs(diff))
-        val pct = if (a > 0) " (%+.0f%%)".format(diff / a * 100) else ""
-        return when {
-            diff > 0 -> "$bLabel spent $money more$pct than $aLabel"
-            diff < 0 -> "$bLabel spent $money less$pct than $aLabel"
-            else -> "$aLabel and $bLabel spent the same"
-        }
-    }
-
-    private fun rowDeltaText(a: Double, b: Double): String {
-        val diff = b - a
-        val sign = if (diff >= 0) "+" else "-"
-        val money = "$sign${Formatters.formatAmount(abs(diff))}"
-        val pct = when {
-            a > 0 -> "%+.0f%%".format(diff / a * 100)
-            b > 0 -> "new"
-            else -> ""
-        }
-        return if (pct.isEmpty()) money else "$money\n$pct"
-    }
-
-    private fun deltaColor(diff: Double): Int = when {
-        diff > 0 -> ContextCompat.getColor(requireContext(), R.color.expense)
-        diff < 0 -> ContextCompat.getColor(requireContext(), R.color.income)
-        else -> ContextCompat.getColor(requireContext(), R.color.text_secondary)
-    }
-
-    // ---------- Bar chart ----------
-
-    private fun setupChart() {
-        binding.barChart.apply {
-            setDrawGridBackground(false)
-            description.isEnabled = false
-            legend.isEnabled = false
-            setScaleEnabled(false)
-            setBackgroundColor(Color.parseColor("#13131A"))
-            xAxis.apply {
-                position = XAxis.XAxisPosition.BOTTOM
-                setDrawGridLines(false)
-                textColor = Color.parseColor("#8A8799")
-                textSize = 10f
-                granularity = 1f
-            }
-            axisLeft.apply {
-                setDrawGridLines(true)
-                gridColor = Color.parseColor("#1F1F2E")
-                textColor = Color.parseColor("#8A8799")
-                axisMinimum = 0f
-            }
-            axisRight.isEnabled = false
-            setDrawValueAboveBar(true)
-            animateY(600)
-            setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
-                override fun onValueSelected(e: Entry?, h: Highlight?) {
-                    val i = e?.x?.toInt() ?: return
-                    if (i in lastMonths.indices) {
-                        binding.tvBarDetail.text = getString(
-                            R.string.chart_value_format,
-                            lastMonths[i].label,
-                            Formatters.formatAmount(e.y.toDouble())
-                        )
-                    }
-                }
-                override fun onNothingSelected() {
-                    binding.tvBarDetail.text = getString(R.string.bar_hint)
-                }
-            })
-        }
-    }
-
-    private val euroValueFormatter = object : ValueFormatter() {
-        override fun getFormattedValue(value: Float): String = "€" + value.roundToInt()
-    }
-
-    // ---------- Donut (category share) ----------
-
-    private fun setupPie() {
-        binding.pieChart.apply {
-            setUsePercentValues(false)
-            description.isEnabled = false
-            isDrawHoleEnabled = true
-            holeRadius = 62f
-            transparentCircleRadius = 0f
-            setHoleColor(Color.parseColor("#13131A"))
-            setDrawEntryLabels(false)
-            setCenterTextColor(Color.parseColor("#F0EEE9"))
-            setCenterTextSize(13f)
-            legend.isEnabled = false
-            setTouchEnabled(true)
-            isRotationEnabled = true
-            isHighlightPerTapEnabled = true
-            setBackgroundColor(Color.TRANSPARENT)
-            setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
-                override fun onValueSelected(e: Entry?, h: Highlight?) {
-                    val pe = e as? PieEntry ?: return
-                    val v = pe.value.toDouble()
-                    val pct = if (donutTotal > 0) (v / donutTotal * 100).roundToInt() else 0
-                    binding.pieChart.centerText = "${pe.label}\n${Formatters.formatAmount(v)}"
-                    binding.tvDonutDetail.text = getString(
-                        R.string.pie_slice_format, pe.label, Formatters.formatAmount(v), pct
-                    )
-                }
-                override fun onNothingSelected() {
-                    binding.pieChart.centerText = Formatters.formatAmount(donutTotal)
-                    binding.tvDonutDetail.text = getString(R.string.donut_hint)
-                }
-            })
-        }
-    }
-
-    private fun updateDonut(
-        ym: YearMonth,
-        cats: List<Triple<String, String, Double>>,
-        total: Double,
-        colorByName: Map<String, String>
-    ) {
-        binding.tvDonutSub.text = Formatters.monthLabelFull(ym.year, ym.month)
-        donutTotal = total
-        binding.tvDonutDetail.text = getString(R.string.donut_hint)
-        if (cats.isEmpty() || total <= 0.0) {
-            donutTotal = 0.0
-            binding.pieChart.data = null
-            binding.pieChart.centerText = "No data"
-            binding.pieChart.invalidate()
-            return
-        }
-        val entries = cats.map { PieEntry(it.third.toFloat(), it.first) }
-        val colors = cats.map {
-            try { Color.parseColor(colorByName[it.first]) } catch (e: Exception) { Color.GRAY }
-        }
-        val dataSet = PieDataSet(entries, "").apply {
+        val entries = pts.mapIndexed { i, p -> BarEntry(i.toFloat(), (if (isExpense) p.expense else p.income).toFloat()) }
+        val colors = pts.mapIndexed { i, _ -> if (i == pts.lastIndex) accent else accent.withAlpha(90) }
+        val set = BarDataSet(entries, "").apply {
             this.colors = colors
-            setDrawValues(false)
-            sliceSpace = 2f
+            valueTextColor = requireContext().color(R.color.text_secondary)
+            valueTextSize = 9f
+            valueFormatter = ChartStyle.compactCurrency
+            highLightAlpha = 40
         }
-        binding.pieChart.data = PieData(dataSet)
-        binding.pieChart.centerText = Formatters.formatAmount(total)
-        binding.pieChart.highlightValues(null)
-        binding.pieChart.invalidate()
-    }
-
-    // ---------- Balance over time ----------
-
-    private fun setupLine() {
-        binding.lineChart.apply {
-            setDrawGridBackground(false)
-            description.isEnabled = false
-            legend.isEnabled = false
-            setScaleEnabled(false)
-            setTouchEnabled(true)
-            isHighlightPerTapEnabled = true
-            isHighlightPerDragEnabled = true
-            setBackgroundColor(Color.parseColor("#13131A"))
-            xAxis.apply {
-                position = XAxis.XAxisPosition.BOTTOM
-                setDrawGridLines(false)
-                textColor = Color.parseColor("#8A8799")
-                textSize = 9f
-                granularity = 1f
-                labelCount = 5
+        bd.chartTrend.apply {
+            data = BarData(set).apply { barWidth = 0.55f }
+            xAxis.valueFormatter = IndexAxisValueFormatter(pts.map { it.period.shortLabel })
+            xAxis.labelCount = pts.size
+            axisLeft.removeAllLimitLines()
+            if (avg != null && avg > 0) {
+                axisLeft.addLimitLine(LimitLine(avg.toFloat(), "").apply {
+                    lineColor = requireContext().color(R.color.text_muted)
+                    lineWidth = 1f
+                    enableDashedLine(8f, 6f, 0f)
+                })
             }
-            axisLeft.apply {
-                setDrawGridLines(true)
-                gridColor = Color.parseColor("#1F1F2E")
-                textColor = Color.parseColor("#8A8799")
-            }
-            axisRight.isEnabled = false
+            axisLeft.axisMaximum = maxOf(entries.maxOfOrNull { it.y } ?: 0f, avg?.toFloat() ?: 0f) * 1.2f + 1f
+            highlightValues(null)
+            invalidate()
             setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
                 override fun onValueSelected(e: Entry?, h: Highlight?) {
                     val i = e?.x?.toInt() ?: return
-                    if (i in lineLabels.indices) {
-                        binding.tvLineDetail.text = getString(
-                            R.string.chart_value_format,
-                            lineLabels[i],
-                            Formatters.formatAmount(e.y.toDouble())
-                        )
-                    }
+                    if (i in pts.indices && i != pts.lastIndex) viewModel.setPeriod(pts[i].period)
                 }
-                override fun onNothingSelected() {
-                    binding.tvLineDetail.text = getString(R.string.line_hint)
-                }
+                override fun onNothingSelected() {}
             })
         }
     }
 
-    private fun updateLine(txs: List<Transaction>) {
-        if (_binding == null) return
-        binding.tvLineDetail.text = getString(R.string.line_hint)
-        if (txs.isEmpty()) {
-            lineLabels = emptyList()
-            binding.lineChart.data = null
-            binding.lineChart.invalidate()
-            return
-        }
-        val cal = Calendar.getInstance()
-        val months = txs.map {
-            cal.timeInMillis = it.date
-            YearMonth(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH))
-        }.distinct().sortedWith(compareBy({ it.year }, { it.month }))
+    // ---------- Categories ----------
 
-        var running = 0.0
-        val labels = ArrayList<String>()
-        val entries = ArrayList<Entry>()
-        months.forEachIndexed { i, ym ->
-            val m = txsForMonth(ym)
-            val net = m.filter { it.type == "income" }.sumOf { it.amount } -
-                    m.filter { it.type == "expense" }.sumOf { it.amount }
-            running += net
-            entries.add(Entry(i.toFloat(), running.toFloat()))
-            labels.add(Formatters.monthLabelShort(ym.year, ym.month))
-        }
-
-        lineLabels = labels
-
-        val accent = Color.parseColor("#1FC8A8")
-        val dataSet = LineDataSet(entries, "").apply {
-            color = accent
-            lineWidth = 2f
-            setDrawCircles(false)
-            setDrawValues(false)
-            setDrawFilled(true)
-            fillColor = accent
-            fillAlpha = 40
-            mode = LineDataSet.Mode.CUBIC_BEZIER
-            highLightColor = accent
-            highlightLineWidth = 1.2f
-            setDrawHorizontalHighlightIndicator(false)
-        }
-        binding.lineChart.apply {
-            data = LineData(dataSet)
-            xAxis.valueFormatter = IndexAxisValueFormatter(labels)
-            invalidate()
+    private fun renderCategories(cats: List<CategoryStat>, type: String, isExpense: Boolean) {
+        bd.tvCatTitle.text = getString(if (isExpense) R.string.by_category else R.string.by_source)
+        bd.stackedBar.segments = cats.map { StackedBarView.Segment(it.share.toFloat(), parseColor(it.color)) }
+        bd.llCategories.removeAllViews()
+        val max = cats.maxOfOrNull { it.amount } ?: 0.0
+        cats.forEach { c ->
+            val row = ItemCategoryRowBinding.inflate(layoutInflater, bd.llCategories, false)
+            row.tvEmoji.text = c.emoji; row.tvEmoji.tintTile(c.color)
+            row.tvName.text = c.name
+            row.tvAmount.text = Formatters.formatAmount(c.amount)
+            row.bar.barColor = parseColor(c.color)
+            row.bar.fraction = if (max > 0) (c.amount / max).toFloat() else 0f
+            row.tvSub.text = "${resources.getQuantityString(R.plurals.transaction_count, c.count, c.count)} · ${Formatters.formatPctPlain(c.share)}"
+            when {
+                c.isNew -> { row.tvDelta.text = getString(R.string.category_new); row.tvDelta.setTextColor(requireContext().color(R.color.text_muted)) }
+                c.compareAmount == 0.0 -> row.tvDelta.text = ""
+                c.delta == 0.0 -> { row.tvDelta.text = "no change"; row.tvDelta.setTextColor(requireContext().color(R.color.text_muted)) }
+                else -> {
+                    row.tvDelta.text = Formatters.formatSigned(c.delta) + (c.deltaPct?.let { " (${Formatters.formatPct(it)})" } ?: "")
+                    row.tvDelta.applyDeltaColor(c.delta, higherIsGood = !isExpense)
+                }
+            }
+            row.root.setOnClickListener { CategoryDetailSheet.show(childFragmentManager, c.name, type) }
+            bd.llCategories.addView(row.root)
         }
     }
 
-    private var lastMonths: List<MonthData> = emptyList()
+    // ---------- Pace ----------
 
-    private fun refreshChart() {
-        if (lastMonths.isNotEmpty()) updateChart(lastMonths)
-    }
+    private fun renderPace(d: ReportData) {
+        val ctx = requireContext()
+        val cur = d.paceCurrent.mapIndexed { i, v -> Entry((i + 1).toFloat(), v.toFloat()) }
+        val cmp = d.paceCompare.mapIndexed { i, v -> Entry((i + 1).toFloat(), v.toFloat()) }
+        val setCur = LineDataSet(cur, "cur").apply {
+            color = ctx.color(R.color.accent); lineWidth = 2.5f
+            setDrawCircles(false); setDrawValues(false)
+            setDrawFilled(true); fillColor = ctx.color(R.color.accent); fillAlpha = 35
+            mode = LineDataSet.Mode.LINEAR
+            highLightColor = ctx.color(R.color.accent); setDrawHorizontalHighlightIndicator(false)
+        }
+        val setCmp = LineDataSet(cmp, "cmp").apply {
+            color = ctx.color(R.color.series_prev); lineWidth = 1.5f
+            enableDashedLine(10f, 6f, 0f)
+            setDrawCircles(false); setDrawValues(false)
+            mode = LineDataSet.Mode.LINEAR
+            isHighlightEnabled = false
+        }
+        bd.tvPaceLegendA.text = d.period.mediumLabel
+        bd.tvPaceLegendB.text = d.comparePeriod.mediumLabel
+        bd.tvPaceSub.text = if (d.period.isCurrent()) {
+            val today = d.paceCurrent.lastOrNull() ?: 0.0
+            val idx = d.paceCurrent.size - 1
+            val cmpSameDay = d.paceCompare.getOrNull(idx)
+            if (cmpSameDay != null && cmpSameDay > 0) {
+                val diff = today - cmpSameDay
+                "Day ${idx + 1}: ${Formatters.formatSigned(diff)} vs the same point in ${d.comparePeriod.mediumLabel}"
+            } else getString(R.string.spending_pace_sub)
+        } else getString(R.string.spending_pace_sub)
 
-    private fun updateChart(months: List<MonthData>) {
-        lastMonths = months
-        binding.tvChartTitle.text = if (showingExpenses) "Monthly Spending" else "Monthly Income"
-        binding.tvBarDetail.text = getString(R.string.bar_hint)
-        val color = if (showingExpenses) Color.parseColor("#FF5C7A") else Color.parseColor("#2DD4A0")
-        val entries = months.mapIndexed { i, m ->
-            BarEntry(i.toFloat(), (if (showingExpenses) m.expense else m.income).toFloat())
-        }
-        val dataSet = BarDataSet(entries, "").apply {
-            this.color = color
-            valueTextColor = Color.parseColor("#8A8799")
-            valueTextSize = 9f
-            valueFormatter = euroValueFormatter
-        }
-        binding.barChart.apply {
-            data = BarData(dataSet).apply { barWidth = 0.6f }
-            xAxis.valueFormatter = IndexAxisValueFormatter(months.map { it.label })
+        bd.chartPace.apply {
+            data = LineData(setCmp, setCur)
+            xAxis.axisMinimum = 1f
+            xAxis.axisMaximum = maxOf(d.period.dayCount, d.comparePeriod.dayCount).toFloat()
+            xAxis.labelCount = 5
+            xAxis.valueFormatter = object : ValueFormatter() {
+                override fun getFormattedValue(value: Float) = "d${value.toInt()}"
+            }
             highlightValues(null)
             invalidate()
         }
+    }
+
+    // ---------- Weekday ----------
+
+    private fun renderWeekday(d: ReportData) {
+        val ctx = requireContext()
+        val entries = d.weekdays.mapIndexed { i, w -> BarEntry(i.toFloat(), w.average.toFloat()) }
+        val maxI = d.weekdays.indices.maxByOrNull { d.weekdays[it].average } ?: -1
+        val set = BarDataSet(entries, "").apply {
+            colors = d.weekdays.indices.map { if (it == maxI) ctx.color(R.color.warning) else ctx.color(R.color.warning).withAlpha(90) }
+            valueTextColor = ctx.color(R.color.text_secondary); valueTextSize = 9f
+            valueFormatter = ChartStyle.compactCurrency
+            isHighlightEnabled = false
+        }
+        bd.chartWeekday.apply {
+            data = BarData(set).apply { barWidth = 0.6f }
+            xAxis.valueFormatter = IndexAxisValueFormatter(d.weekdays.map { it.label })
+            xAxis.labelCount = 7
+            invalidate()
+        }
+    }
+
+    // ---------- Notes / largest ----------
+
+    private fun renderNotes(notes: List<NoteStat>) {
+        bd.llNotes.removeAllViews()
+        notes.forEach { n ->
+            val row = ItemSimpleRowBinding.inflate(layoutInflater, bd.llNotes, false)
+            row.tvEmoji.text = n.emoji
+            row.tvTitle.text = n.label
+            row.tvSub.text = resources.getQuantityString(R.plurals.transaction_count, n.count, n.count)
+            row.tvAmount.text = Formatters.formatAmount(n.amount)
+            bd.llNotes.addView(row.root)
+        }
+    }
+
+    private fun renderLargest(list: List<Transaction>) {
+        bd.llLargest.removeAllViews()
+        list.forEachIndexed { i, tx ->
+            val row = ItemTransactionBinding.inflate(layoutInflater, bd.llLargest, false)
+            TransactionRow.bind(row, tx, showDate = true, showDivider = i < list.lastIndex)
+            row.root.setOnClickListener { openTransaction(tx) }
+            bd.llLargest.addView(row.root)
+        }
+    }
+
+    private fun openTransaction(tx: Transaction) {
+        findNavController().navigate(R.id.action_global_add, Bundle().apply { putLong("transactionId", tx.id) })
+    }
+
+    // ---------- Cash flow ----------
+
+    private fun renderCashFlow(d: ReportData) {
+        val ctx = requireContext()
+        val s = d.summary; val c = d.compareSummary
+        cf.tvNet.text = Formatters.formatSigned(s.net)
+        cf.tvNet.setTextColor(ctx.color(if (s.net >= 0) R.color.text_primary else R.color.expense))
+        val rate = s.savingsRate
+        cf.tvSavings.text = when {
+            rate == null -> "No income recorded"
+            rate >= 0 -> "Saved ${Formatters.formatPctPlain(rate)} of income"
+            else -> "Overspent by ${Formatters.formatPctPlain(-rate)}"
+        }
+        val good = rate != null && rate >= 0
+        cf.tvSavings.setTextColor(ctx.color(if (good) R.color.accent else R.color.expense))
+        cf.tvSavings.backgroundTintList = android.content.res.ColorStateList.valueOf(
+            ctx.color(if (good) R.color.accent_dim else R.color.expense_dim)
+        )
+        val netDiff = s.net - c.net
+        cf.tvNetDelta.text = if (c.txCount == 0) "" else "${Formatters.formatSigned(netDiff)} vs ${d.comparePeriod.mediumLabel}"
+        cf.tvNetDelta.applyDeltaColor(netDiff, higherIsGood = true)
+        cf.barFlow.barColor = ctx.color(if (s.expense <= s.income) R.color.expense else R.color.expense)
+        cf.barFlow.trackColor = ctx.color(R.color.income_dim)
+        cf.barFlow.fraction = if (s.income > 0) (s.expense / s.income).toFloat() else if (s.expense > 0) 1f else 0f
+        cf.tvFlowIncome.text = Formatters.formatAmount(s.income)
+        cf.tvFlowExpense.text = Formatters.formatAmount(s.expense)
+
+        cf.sankey.data = d.sankey
+        val sankeyEmpty = d.sankey.sources.isEmpty() && d.sankey.targets.isEmpty()
+        cf.sankey.visible(!sankeyEmpty)
+        cf.tvSankeySub.text = when {
+            sankeyEmpty -> getString(R.string.no_data_period)
+            d.sankey.deficit > 0 -> "Spending exceeded income by ${Formatters.formatAmount(d.sankey.deficit)}"
+            else -> getString(R.string.where_money_went_sub)
+        }
+
+        renderCashChart(d)
+        renderBalance(d)
+    }
+
+    private fun renderCashChart(d: ReportData) {
+        val ctx = requireContext()
+        val pts = d.cashFlow
+        cf.tvCashSub.text = "Last ${pts.size} ${d.period.noun}s"
+        val inc = BarDataSet(pts.mapIndexed { i, p -> BarEntry(i.toFloat(), p.income.toFloat()) }, "in").apply {
+            color = ctx.color(R.color.income); setDrawValues(false); highLightAlpha = 60
+        }
+        val exp = BarDataSet(pts.mapIndexed { i, p -> BarEntry(i.toFloat(), p.expense.toFloat()) }, "out").apply {
+            color = ctx.color(R.color.expense); setDrawValues(false); highLightAlpha = 60
+        }
+        val groupSpace = 0.24f; val barSpace = 0.02f; val barWidth = 0.36f
+        cf.chartCashflow.apply {
+            data = BarData(inc, exp).apply { this.barWidth = barWidth }
+            xAxis.valueFormatter = IndexAxisValueFormatter(pts.map { it.period.shortLabel })
+            xAxis.setCenterAxisLabels(true)
+            xAxis.axisMinimum = 0f
+            xAxis.axisMaximum = pts.size.toFloat()
+            xAxis.labelCount = pts.size
+            groupBars(0f, groupSpace, barSpace)
+            highlightValues(null)
+            invalidate()
+            setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+                override fun onValueSelected(e: Entry?, h: Highlight?) {
+                    val i = h?.let { ((it.x - 0f) / 1f).toInt() } ?: return
+                    val p = pts.getOrNull(i) ?: return
+                    cf.tvCashDetail.text = "${p.period.mediumLabel} · in ${Formatters.formatCompact(p.income)} · out ${Formatters.formatCompact(p.expense)} · net ${Formatters.formatSigned(p.net)}"
+                }
+                override fun onNothingSelected() { cf.tvCashDetail.text = getString(R.string.trend_hint) }
+            })
+        }
+        cf.tvCashDetail.text = "Tap a bar to see that ${d.period.noun}"
+    }
+
+    private fun renderBalance(d: ReportData) {
+        val ctx = requireContext()
+        val pts = d.balance
+        if (pts.isEmpty()) { cf.chartBalance.data = null; cf.chartBalance.invalidate(); return }
+        val entries = pts.mapIndexed { i, (_, v) -> Entry(i.toFloat(), v.toFloat()) }
+        val set = LineDataSet(entries, "").apply {
+            color = ctx.color(R.color.accent); lineWidth = 2f
+            setDrawCircles(false); setDrawValues(false)
+            setDrawFilled(true); fillColor = ctx.color(R.color.accent); fillAlpha = 35
+            mode = LineDataSet.Mode.CUBIC_BEZIER
+            highLightColor = ctx.color(R.color.accent); setDrawHorizontalHighlightIndicator(false)
+        }
+        val min = entries.minOf { it.y }
+        cf.chartBalance.apply {
+            data = LineData(set)
+            axisLeft.axisMinimum = if (min < 0) min * 1.15f else 0f
+            xAxis.valueFormatter = IndexAxisValueFormatter(pts.map { it.first.mediumLabel })
+            xAxis.labelCount = minOf(5, pts.size)
+            highlightValues(null)
+            invalidate()
+            setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
+                override fun onValueSelected(e: Entry?, h: Highlight?) {
+                    val i = e?.x?.toInt() ?: return
+                    pts.getOrNull(i)?.let { cf.tvBalanceDetail.text = "${it.first.label} · ${Formatters.formatAmount(it.second)}" }
+                }
+                override fun onNothingSelected() { cf.tvBalanceDetail.text = "" }
+            })
+        }
+        cf.tvBalanceDetail.text = "Now: ${Formatters.formatAmount(pts.last().second)}"
+    }
+
+    // ---------- Chart setup ----------
+
+    private fun setupCharts() {
+        ChartStyle.bar(bd.chartTrend)
+        ChartStyle.line(bd.chartPace).apply { axisLeft.setLabelCount(3, false) }
+        ChartStyle.bar(bd.chartWeekday).apply { axisLeft.isEnabled = false }
+        ChartStyle.bar(cf.chartCashflow)
+        ChartStyle.line(cf.chartBalance)
+        listOf(bd.chartTrend, bd.chartWeekday, cf.chartCashflow).forEach { it.animateY(500) }
     }
 
     override fun onDestroyView() {

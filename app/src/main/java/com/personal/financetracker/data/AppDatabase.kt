@@ -5,10 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
+import android.content.ContentValues
 import androidx.sqlite.db.SupportSQLiteDatabase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [Transaction::class, Category::class, PlannedPayment::class],
@@ -55,14 +53,12 @@ abstract class AppDatabase : RoomDatabase() {
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         super.onCreate(db)
-                        // Seed default categories on first create
-                        CoroutineScope(Dispatchers.IO).launch {
-                            val database = INSTANCE ?: return@launch
-                            val dao = database.categoryDao()
-                            if (dao.getCount() == 0) {
-                                dao.insertAll(defaultExpenseCategories)
-                                dao.insertAll(defaultIncomeCategories)
-                            }
+                        // Seed default categories synchronously so they exist before any first query
+                        (defaultExpenseCategories + defaultIncomeCategories).forEach { c ->
+                            db.insert("categories", android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE, ContentValues().apply {
+                                put("name", c.name); put("emoji", c.emoji); put("color", c.color)
+                                put("type", c.type); put("isDefault", 1)
+                            })
                         }
                     }
                 })

@@ -7,51 +7,26 @@
     android:background="@color/bg">
 
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:orientation="vertical" android:paddingHorizontal="16dp"
-        android:paddingTop="28dp" android:paddingBottom="8dp">
+        android:orientation="vertical" android:paddingHorizontal="@dimen/screen_padding" android:paddingTop="16dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <ImageButton android:id="@+id/btn_back" style="@style/IconButton" android:src="@drawable/ic_back" android:contentDescription="Back" android:layout_marginEnd="12dp"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+                <TextView style="@style/Text.ScreenTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/categories" android:textSize="22sp"/>
+                <TextView style="@style/Text.Caption" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/manage_categories"/>
+            </LinearLayout>
+        </LinearLayout>
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Categories" android:textColor="@color/text_primary"
-            android:textSize="22sp" android:textStyle="bold" android:layout_marginBottom="4dp"/>
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Manage your spending categories"
-            android:textColor="@color/text_muted" android:textSize="13sp" android:layout_marginBottom="14dp"/>
-
-        <com.google.android.material.chip.ChipGroup
+        <com.personal.financetracker.ui.common.SegmentedControl android:id="@+id/seg_type"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp" app:singleSelection="true">
-            <com.google.android.material.chip.Chip android:id="@+id/chip_expense"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Expenses" style="@style/Widget.MaterialComponents.Chip.Filter"
-                android:textColor="@color/text_secondary" app:chipBackgroundColor="@color/bg_card"
-                app:chipStrokeColor="@color/border" app:chipStrokeWidth="1dp"/>
-            <com.google.android.material.chip.Chip android:id="@+id/chip_income"
-                android:layout_width="wrap_content" android:layout_height="wrap_content"
-                android:text="Income" style="@style/Widget.MaterialComponents.Chip.Filter"
-                android:textColor="@color/text_secondary" app:chipBackgroundColor="@color/bg_card"
-                app:chipStrokeColor="@color/border" app:chipStrokeWidth="1dp"/>
-        </com.google.android.material.chip.ChipGroup>
+            app:segments="Expenses|Income" android:layout_marginTop="16dp" android:layout_marginBottom="8dp"/>
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_categories"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingHorizontal="16dp"
-        android:clipToPadding="false"
-        android:paddingBottom="80dp"/>
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_categories"
+        android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:paddingHorizontal="@dimen/screen_padding" android:clipToPadding="false" android:paddingBottom="16dp"/>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btn_add_category"
-        android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginBottom="16dp"
-        android:text="＋ Add Custom Category"
-        android:textSize="14sp" android:textStyle="bold"
-        android:textColor="@color/accent"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        app:strokeColor="@color/accent"/>
-
+    <com.google.android.material.button.MaterialButton android:id="@+id/btn_add_category" style="@style/GhostButton"
+        android:layout_width="match_parent" android:layout_height="52dp"
+        android:layout_marginHorizontal="@dimen/screen_padding" android:layout_marginBottom="16dp"
+        android:text="+ Add category"/>
 </LinearLayout>

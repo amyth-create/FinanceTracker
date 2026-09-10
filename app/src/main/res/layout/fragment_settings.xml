@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg">
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingHorizontal="@dimen/screen_padding" android:paddingTop="16dp" android:paddingBottom="32dp">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="24dp">
+            <ImageButton android:id="@+id/btn_back" style="@style/IconButton" android:src="@drawable/ic_back" android:contentDescription="Back" android:layout_marginEnd="12dp"/>
+            <TextView style="@style/Text.ScreenTitle" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/settings" android:textSize="22sp"/>
+        </LinearLayout>
+
+        <TextView style="@style/Text.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/settings_data" android:layout_marginBottom="8dp" android:layout_marginStart="4dp"/>
+        <LinearLayout style="@style/Card.Flush" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="@dimen/section_gap">
+            <include android:id="@+id/row_categories" layout="@layout/item_settings_row"/>
+            <include android:id="@+id/row_export" layout="@layout/item_settings_row"/>
+            <include android:id="@+id/row_import" layout="@layout/item_settings_row"/>
+        </LinearLayout>
+
+        <TextView style="@style/Text.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/settings_about" android:layout_marginBottom="8dp" android:layout_marginStart="4dp"/>
+        <LinearLayout style="@style/Card" android:layout_width="match_parent" android:layout_height="wrap_content">
+            <TextView style="@style/Text.BodyBold" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_name"/>
+            <TextView android:id="@+id/tv_version" style="@style/Text.Muted" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp"/>
+            <TextView style="@style/Text.Caption" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/settings_offline" android:layout_marginTop="10dp" android:lineSpacingExtra="3dp"/>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

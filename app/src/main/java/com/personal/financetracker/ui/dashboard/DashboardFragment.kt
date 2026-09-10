@@ -4,22 +4,20 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.chip.Chip
-import com.google.android.material.chip.ChipGroup
 import com.personal.financetracker.R
-import com.personal.financetracker.data.Transaction
 import com.personal.financetracker.databinding.FragmentDashboardBinding
+import com.personal.financetracker.databinding.ItemCategoryMiniBinding
+import com.personal.financetracker.databinding.ItemSimpleRowBinding
+import com.personal.financetracker.domain.Analytics
+import com.personal.financetracker.ui.MainActivity
+import com.personal.financetracker.ui.common.*
 import com.personal.financetracker.ui.transactions.TransactionAdapter
 import com.personal.financetracker.util.Formatters
-import java.util.*
-import kotlin.math.abs
-import kotlin.math.roundToInt
+import java.util.concurrent.TimeUnit
 
 class DashboardFragment : Fragment() {
 
@@ -28,17 +26,6 @@ class DashboardFragment : Fragment() {
     private val viewModel: DashboardViewModel by viewModels()
     private lateinit var adapter: TransactionAdapter
 
-    private data class YearMonth(val year: Int, val month: Int)
-    private data class Recur(
-        val emoji: String, val name: String, val amount: Double, val nextDue: Long
-    )
-
-    private val lifestyleCats = setOf("Food & Drink", "Shopping", "Entertainment")
-
-    private var allTxs: List<Transaction> = emptyList()
-    private var availableMonths: List<YearMonth> = emptyList()
-    private var selectedMonth: YearMonth? = null
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         return binding.root
@@ -46,215 +33,112 @@ class DashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.tvGreeting.text = Formatters.greeting()
 
-        adapter = TransactionAdapter(
-            showDelete = false,
-            onDelete = {},
-            onClick = { tx ->
-                val bundle = Bundle().apply { putLong("transactionId", tx.id) }
-                findNavController().navigate(R.id.action_dashboard_to_add, bundle)
-            }
-        )
+        adapter = TransactionAdapter(showDate = true) { tx ->
+            findNavController().navigate(R.id.action_global_add, Bundle().apply { putLong("transactionId", tx.id) })
+        }
         binding.rvRecent.layoutManager = LinearLayoutManager(requireContext())
         binding.rvRecent.adapter = adapter
 
-        binding.fabAdd.setOnClickListener {
-            findNavController().navigate(R.id.action_dashboard_to_add)
-        }
-        binding.tvSeeAll.setOnClickListener {
-            findNavController().navigate(R.id.transactions)
-        }
+        binding.fabAdd.setOnClickListener { findNavController().navigate(R.id.action_global_add) }
+        binding.btnSettings.setOnClickListener { findNavController().navigate(R.id.action_dashboard_to_settings) }
+        binding.tvSeeAll.setOnClickListener { (activity as? MainActivity)?.selectTab(R.id.transactions) }
+        binding.tvSeeReports.setOnClickListener { (activity as? MainActivity)?.selectTab(R.id.reports) }
+        binding.tvSeePlanned.setOnClickListener { (activity as? MainActivity)?.selectTab(R.id.planned) }
+        binding.barHero.trackColor = 0x33FFFFFF
+        binding.barHero.barColor = 0xFFFFFFFF.toInt()
+        binding.periodPicker.onPrevious = { viewModel.previous() }
+        binding.periodPicker.onNext = { viewModel.next() }
 
-        viewModel.allTransactions.observe(viewLifecycleOwner) { txs ->
-            allTxs = txs
-            availableMonths = monthsFrom(txs)
-            ensureSelection()
-            buildMonthChips()
-            renderHero(txs)
-            renderMonth()
-            renderRecurring(txs)
-            adapter.submitList(txs.take(8))
-            binding.emptyState.visibility = if (txs.isEmpty()) View.VISIBLE else View.GONE
-        }
+        viewModel.data.observe(viewLifecycleOwner) { render(it) }
     }
 
-    // ---------- Hero (all-time) ----------
-
-    private fun renderHero(txs: List<Transaction>) {
-        val income = txs.filter { it.type == "income" }.sumOf { it.amount }
-        val expense = txs.filter { it.type == "expense" }.sumOf { it.amount }
-        binding.tvBalance.text = Formatters.formatAmount(income - expense)
-        binding.tvTotalIncome.text = Formatters.formatAmount(income)
-        binding.tvTotalExpense.text = Formatters.formatAmount(expense)
-    }
-
-    // ---------- Months / chips ----------
-
-    private fun monthsFrom(txs: List<Transaction>): List<YearMonth> {
-        val set = LinkedHashSet<YearMonth>()
-        set.add(YearMonth(Formatters.currentYear(), Formatters.currentMonth()))
-        val cal = Calendar.getInstance()
-        txs.forEach {
-            cal.timeInMillis = it.date
-            set.add(YearMonth(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH)))
-        }
-        return set.sortedWith(compareByDescending<YearMonth> { it.year }.thenByDescending { it.month })
-    }
-
-    private fun ensureSelection() {
-        if (availableMonths.isEmpty()) { selectedMonth = null; return }
-        if (selectedMonth == null || selectedMonth !in availableMonths) {
-            selectedMonth = availableMonths.first()
-        }
-    }
-
-    private fun buildMonthChips() {
-        val group: ChipGroup = binding.chipGroupMonths
-        group.removeAllViews()
+    private fun render(d: DashboardData) {
         val ctx = requireContext()
-        val strokePx = resources.displayMetrics.density * 1f
-        availableMonths.forEach { ym ->
-            val chip = Chip(ctx).apply {
-                text = Formatters.monthLabelShort(ym.year, ym.month)
-                isCheckable = true
-                isCheckedIconVisible = false
-                chipBackgroundColor = ContextCompat.getColorStateList(ctx, R.color.month_chip_bg)
-                setTextColor(ContextCompat.getColorStateList(ctx, R.color.month_chip_text))
-                chipStrokeColor = ContextCompat.getColorStateList(ctx, R.color.month_chip_stroke)
-                chipStrokeWidth = strokePx
-                isChecked = (ym == selectedMonth)
-                setOnClickListener { selectedMonth = ym; renderMonth() }
-            }
-            group.addView(chip)
+        val s = d.summary
+        binding.periodPicker.bind(d.period)
+
+        // Hero
+        binding.tvNet.text = Formatters.formatSigned(s.net)
+        binding.tvHeroIncome.text = Formatters.formatAmount(s.income)
+        binding.tvHeroExpense.text = Formatters.formatAmount(s.expense)
+        binding.tvBalance.text = Formatters.formatAmount(d.balance)
+        binding.barHero.fraction = if (s.income > 0) (s.expense / s.income).toFloat() else if (s.expense > 0) 1f else 0f
+        binding.tvHeroSub.text = when {
+            s.income <= 0 && s.expense <= 0 -> "Nothing recorded yet this ${d.period.noun}"
+            s.income <= 0 -> "No income recorded this ${d.period.noun}"
+            s.expense <= s.income -> "Spent ${Formatters.formatPctPlain(s.expense / s.income)} of income"
+            else -> "Spent ${Formatters.formatPctPlain(s.expense / s.income)} of income · over budget"
         }
-    }
 
-    // ---------- Selected-month sections ----------
-
-    private fun txsForMonth(ym: YearMonth): List<Transaction> {
-        val start = Formatters.monthStartFor(ym.year, ym.month)
-        val end = Formatters.monthEndFor(ym.year, ym.month)
-        return allTxs.filter { it.date in start..end }
-    }
-
-    private fun prevMonthOf(ym: YearMonth): YearMonth {
-        val cal = Calendar.getInstance()
-        cal.set(ym.year, ym.month, 1)
-        cal.add(Calendar.MONTH, -1)
-        return YearMonth(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH))
-    }
-
-    private fun renderMonth() {
-        if (_binding == null) return
-        val ym = selectedMonth ?: return
-        val txs = txsForMonth(ym)
-        val income = txs.filter { it.type == "income" }.sumOf { it.amount }
-        val expenses = txs.filter { it.type == "expense" }
-        val expense = expenses.sumOf { it.amount }
-
-        binding.tvMonthIncome.text = Formatters.formatAmount(income)
-        binding.tvMonthExpense.text = Formatters.formatAmount(expense)
-        binding.tvMonthNet.text = Formatters.formatAmount(income - expense)
-
-        // Lifestyle spend
-        val food = expenses.filter { it.categoryName == "Food & Drink" }.sumOf { it.amount }
-        val shopping = expenses.filter { it.categoryName == "Shopping" }.sumOf { it.amount }
-        val fun_ = expenses.filter { it.categoryName == "Entertainment" }.sumOf { it.amount }
-        val lifestyle = food + shopping + fun_
-        binding.tvLifestyleTotal.text = Formatters.formatAmount(lifestyle)
-        binding.tvLifestylePct.text =
-            if (expense > 0) getString(R.string.lifestyle_pct_spending, (lifestyle / expense * 100).roundToInt()) else "—"
-        binding.tvLifeFood.text = Formatters.formatAmount(food)
-        binding.tvLifeShopping.text = Formatters.formatAmount(shopping)
-        binding.tvLifeFun.text = Formatters.formatAmount(fun_)
-
-        // Top category
-        val top = expenses.groupBy { it.categoryName }
-            .map { (name, items) -> name to items.sumOf { it.amount } }
-            .maxByOrNull { it.second }
-        if (top != null) {
-            binding.tvInsightTopcat.text = top.first
-            binding.tvInsightTopcatAmt.text = Formatters.formatAmount(top.second)
+        // Insight tiles
+        binding.tvDaily.text = Formatters.formatAmount(s.avgExpensePerDay)
+        binding.tvProjected.text = Formatters.formatAmount(s.projectedExpense)
+        binding.tvProjectedSub.text = if (d.period.isCurrent()) "month-end spend at this pace" else "total spent"
+        val pct = Analytics.pctChange(s.expense, d.previous.expense)
+        if (pct != null) {
+            binding.tvVs.text = Formatters.formatPct(pct)
+            binding.tvVs.applyDeltaColor(pct, higherIsGood = false)
         } else {
-            binding.tvInsightTopcat.text = "—"
-            binding.tvInsightTopcatAmt.text = Formatters.formatAmount(0.0)
+            binding.tvVs.text = "—"; binding.tvVs.setTextColor(ctx.color(R.color.text_primary))
+        }
+        binding.tvVsSub.text = "vs ${d.period.previous().mediumLabel}"
+        val top = d.topCategories.firstOrNull()
+        binding.tvTopCat.text = top?.let { "${it.emoji} ${it.name}" } ?: "—"
+        binding.tvTopCatSub.text = top?.let { "${Formatters.formatAmount(it.amount)} · ${Formatters.formatPctPlain(it.share)}" } ?: "no spending"
+
+        // Top categories
+        binding.llCategories.removeAllViews()
+        binding.cardCategories.visible(d.topCategories.isNotEmpty())
+        val max = d.topCategories.maxOfOrNull { it.amount } ?: 0.0
+        d.topCategories.forEach { c ->
+            val row = ItemCategoryMiniBinding.inflate(layoutInflater, binding.llCategories, false)
+            row.tvEmoji.text = c.emoji; row.tvEmoji.tintTile(c.color)
+            row.tvName.text = c.name
+            row.tvAmount.text = Formatters.formatAmount(c.amount)
+            row.tvPct.text = Formatters.formatPctPlain(c.share)
+            row.bar.barColor = parseColor(c.color)
+            row.bar.fraction = if (max > 0) (c.amount / max).toFloat() else 0f
+            binding.llCategories.addView(row.root)
         }
 
-        // Spend vs last month
-        val prev = prevMonthOf(ym)
-        val prevExpense = txsForMonth(prev).filter { it.type == "expense" }.sumOf { it.amount }
-        if (prevExpense > 0) {
-            val pct = (expense - prevExpense) / prevExpense * 100
-            val sign = if (pct >= 0) "+" else "−"
-            binding.tvInsightVs.text = getString(R.string.percentage_format, sign, abs(pct).roundToInt())
-            binding.tvInsightVs.setTextColor(
-                ContextCompat.getColor(requireContext(),
-                    if (pct > 0) R.color.expense else R.color.income)
-            )
-        } else {
-            binding.tvInsightVs.text = "—"
-            binding.tvInsightVs.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_primary))
+        // Upcoming
+        binding.llUpcoming.removeAllViews()
+        binding.tvUpcomingEmpty.visible(d.upcoming.isEmpty())
+        val today = Formatters.startOfDay(System.currentTimeMillis())
+        d.upcoming.forEach { p ->
+            val row = ItemSimpleRowBinding.inflate(layoutInflater, binding.llUpcoming, false)
+            row.tvEmoji.text = p.categoryEmoji; row.tvEmoji.tintTile(p.categoryColor)
+            row.tvTitle.text = p.note.ifBlank { p.categoryName }
+            val days = TimeUnit.MILLISECONDS.toDays(Formatters.startOfDay(p.plannedDate) - today).toInt()
+            row.tvSub.text = when {
+                days < 0 -> getString(R.string.overdue)
+                days == 0 -> getString(R.string.due_today)
+                days == 1 -> getString(R.string.tomorrow)
+                else -> getString(R.string.in_days, days)
+            } + " · ${Formatters.formatDateShort(p.plannedDate)}"
+            row.tvSub.setTextColor(ctx.color(if (days < 0) R.color.expense else R.color.text_muted))
+            row.tvAmount.text = (if (p.type == "income") "+" else "−") + Formatters.formatAmount(p.amount)
+            binding.llUpcoming.addView(row.root)
         }
-        binding.tvInsightVsSub.text = getString(R.string.vs_last_month, Formatters.monthLabelShort(prev.year, prev.month))
 
-        // Daily average + projected
-        val cal = Calendar.getInstance()
-        cal.set(ym.year, ym.month, 1)
-        val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
-        val isCurrent = ym.year == Formatters.currentYear() && ym.month == Formatters.currentMonth()
-        val daysElapsed = if (isCurrent) Calendar.getInstance().get(Calendar.DAY_OF_MONTH) else daysInMonth
-        val dailyAvg = if (daysElapsed > 0) expense / daysElapsed else 0.0
-        binding.tvInsightDaily.text = Formatters.formatAmount(dailyAvg)
-        val projected = if (isCurrent) dailyAvg * daysInMonth else expense
-        binding.tvInsightProj.text = Formatters.formatAmount(projected)
-    }
-
-    // ---------- Recurring / subscriptions ----------
-
-    private fun renderRecurring(txs: List<Transaction>) {
-        val recurs = detectRecurring(txs)
+        // Recurring
         binding.llRecurring.removeAllViews()
-        binding.tvRecurringEmpty.visibility = if (recurs.isEmpty()) View.VISIBLE else View.GONE
-        recurs.forEach { r ->
-            val row = layoutInflater.inflate(R.layout.item_recurring, binding.llRecurring, false)
-            row.findViewById<TextView>(R.id.tv_emoji).text = r.emoji
-            row.findViewById<TextView>(R.id.tv_name).text = r.name
-            row.findViewById<TextView>(R.id.tv_next).text =
-                getString(R.string.recurring_next_due, Formatters.formatDateShort(r.nextDue))
-            row.findViewById<TextView>(R.id.tv_amount).text = getString(R.string.approx_amount, Formatters.formatAmount(r.amount))
-            binding.llRecurring.addView(row)
+        binding.cardRecurring.visible(d.recurring.isNotEmpty())
+        d.recurring.forEach { r ->
+            val row = ItemSimpleRowBinding.inflate(layoutInflater, binding.llRecurring, false)
+            row.tvEmoji.text = r.emoji; row.tvEmoji.tintTile(r.color)
+            row.tvTitle.text = r.name
+            row.tvSub.text = "≈ monthly · next ${Formatters.formatDateShort(r.nextDue)}"
+            row.tvAmount.text = "≈ ${Formatters.formatAmount(r.amount)}"
+            binding.llRecurring.addView(row.root)
         }
-    }
 
-    private fun detectRecurring(txs: List<Transaction>): List<Recur> {
-        val expenses = txs.filter { it.type == "expense" }
-        val cal = Calendar.getInstance()
-        fun ymKey(date: Long): String {
-            cal.timeInMillis = date
-            return "${cal.get(Calendar.YEAR)}-${cal.get(Calendar.MONTH)}"
-        }
-        val result = mutableListOf<Recur>()
-        expenses.groupBy { it.categoryName + "|" + it.note.trim().lowercase() }
-            .forEach { (_, items) ->
-                val months = items.map { ymKey(it.date) }.toSet()
-                if (months.size < 3) return@forEach
-                val sorted = items.sortedByDescending { it.date }
-                val last = sorted.first()
-                val amount = median(items.map { it.amount })
-                cal.timeInMillis = last.date
-                cal.add(Calendar.MONTH, 1)
-                val nextDue = cal.timeInMillis
-                val name = last.note.ifBlank { last.categoryName }
-                result.add(Recur(last.categoryEmoji, name, amount, nextDue))
-            }
-        return result.sortedByDescending { it.amount }.take(6)
-    }
-
-    private fun median(values: List<Double>): Double {
-        if (values.isEmpty()) return 0.0
-        val sorted = values.sorted()
-        val mid = sorted.size / 2
-        return if (sorted.size % 2 == 1) sorted[mid] else (sorted[mid - 1] + sorted[mid]) / 2
+        // Recent
+        adapter.submitList(d.recent)
+        binding.emptyState.visible(d.totalCount == 0)
+        binding.cardRecent.visible(d.totalCount > 0)
     }
 
     override fun onDestroyView() {

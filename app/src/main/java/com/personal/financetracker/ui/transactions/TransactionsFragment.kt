@@ -1,26 +1,27 @@
 package com.personal.financetracker.ui.transactions
 
-import android.content.Intent
-import android.net.Uri
+import android.graphics.Canvas
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
-import androidx.core.content.FileProvider
+import android.view.inputmethod.InputMethodManager
+import android.widget.PopupMenu
+import androidx.core.content.ContextCompat
+import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
 import com.personal.financetracker.R
 import com.personal.financetracker.data.Transaction
 import com.personal.financetracker.databinding.FragmentTransactionsBinding
-import com.personal.financetracker.util.Formatters
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
+import com.personal.financetracker.ui.common.CsvActions
+import com.personal.financetracker.ui.common.dp
+import com.personal.financetracker.ui.common.visible
 
 class TransactionsFragment : Fragment() {
 
@@ -28,12 +29,7 @@ class TransactionsFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: TransactionsViewModel by viewModels()
     private lateinit var adapter: TransactionSectionAdapter
-    private val dayKeyFmt = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
-
-    private val importLauncher =
-        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-            uri?.let { readAndImport(it) }
-        }
+    private val csv = CsvActions(this)
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentTransactionsBinding.inflate(inflater, container, false)
@@ -43,136 +39,100 @@ class TransactionsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = TransactionSectionAdapter(
-            showDelete = true,
-            onDelete = { tx -> confirmDelete(tx) },
-            onClick = { tx ->
-                val bundle = Bundle().apply { putLong("transactionId", tx.id) }
-                findNavController().navigate(R.id.action_transactions_to_add, bundle)
-            }
-        )
+        adapter = TransactionSectionAdapter { tx -> openTransaction(tx) }
         binding.rvTransactions.layoutManager = LinearLayoutManager(requireContext())
         binding.rvTransactions.adapter = adapter
+        ItemTouchHelper(SwipeToDelete()).attachToRecyclerView(binding.rvTransactions)
 
-        binding.btnExport.setOnClickListener { exportToCsv() }
+        binding.fabAdd.setOnClickListener { findNavController().navigate(R.id.action_global_add) }
+        binding.btnMore.setOnClickListener { showMenu() }
+        binding.btnSearch.setOnClickListener { toggleSearch(true) }
+        binding.btnCloseSearch.setOnClickListener { toggleSearch(false) }
+        binding.etSearch.doAfterTextChanged { viewModel.search.value = it?.toString().orEmpty() }
 
-        binding.btnImport.setOnClickListener {
-            importLauncher.launch(arrayOf("*/*"))
-        }
+        binding.chipAll.setOnClickListener { viewModel.filter.value = "all" }
+        binding.chipExpense.setOnClickListener { viewModel.filter.value = "expense" }
+        binding.chipIncome.setOnClickListener { viewModel.filter.value = "income" }
+        binding.chipAll.isChecked = true
 
-        binding.fabAdd.setOnClickListener {
-            findNavController().navigate(R.id.action_transactions_to_add)
-        }
-
-        var currentFilter = "all"
-
-        fun applyFilter(filter: String) {
-            currentFilter = filter
-            binding.chipAll.isChecked = filter == "all"
-            binding.chipExpense.isChecked = filter == "expense"
-            binding.chipIncome.isChecked = filter == "income"
-            viewModel.transactions.value?.let { txs ->
-                val filtered = when (filter) {
-                    "income" -> txs.filter { it.type == "income" }
-                    "expense" -> txs.filter { it.type == "expense" }
-                    else -> txs
-                }
-                adapter.submit(buildRows(filtered))
-                binding.tvCount.text = resources.getQuantityString(R.plurals.transaction_count, filtered.size, filtered.size)
-                binding.emptyState.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
+        viewModel.listing.observe(viewLifecycleOwner) { l ->
+            val lm = binding.rvTransactions.layoutManager as LinearLayoutManager
+            val wasAtTop = lm.findFirstCompletelyVisibleItemPosition() <= 1
+            adapter.submitList(l.rows) {
+                // Keep a freshly added (newest) transaction visible instead of anchoring to the old first row
+                if (wasAtTop && _binding != null) binding.rvTransactions.scrollToPosition(0)
             }
-        }
-
-        binding.chipAll.setOnClickListener { applyFilter("all") }
-        binding.chipExpense.setOnClickListener { applyFilter("expense") }
-        binding.chipIncome.setOnClickListener { applyFilter("income") }
-
-        viewModel.transactions.observe(viewLifecycleOwner) { _ ->
-            applyFilter(currentFilter)
+            binding.tvCount.text = resources.getQuantityString(R.plurals.transaction_count, l.count, l.count)
+            val empty = l.count == 0
+            binding.emptyState.visible(empty)
+            binding.tvEmptyTitle.text = getString(if (l.total == 0) R.string.no_transactions_yet else R.string.no_results)
+            binding.tvEmptySub.visible(l.total == 0)
         }
     }
 
-    private fun buildRows(txs: List<Transaction>): List<TxRow> {
-        val rows = mutableListOf<TxRow>()
-        txs.sortedByDescending { it.date }
-            .groupBy { dayKeyFmt.format(it.date) }
-            .forEach { (_, items) ->
-                val net = items.sumOf { if (it.type == "income") it.amount else -it.amount }
-                rows.add(TxRow.Header(Formatters.formatDate(items.first().date), net))
-                items.forEach { rows.add(TxRow.Item(it)) }
-            }
-        return rows
-    }
-
-    private fun exportToCsv() {
-        val transactions = viewModel.transactions.value ?: return
-        if (transactions.isEmpty()) {
-            Toast.makeText(requireContext(), "No data to export", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val csvHeader = "Date,Type,Amount,Category,Note\n"
-        val csvData = transactions.joinToString("\n") { tx ->
-            "${Formatters.formatDate(tx.date)},${tx.type},${tx.amount},${tx.categoryName},${tx.note.replace(",", " ")}"
-        }
-        val csvContent = csvHeader + csvData
-
-        try {
-            val fileName = "finance_transactions.csv"
-            val file = File(requireContext().cacheDir, fileName)
-            file.writeText(csvContent)
-
-            val uri = FileProvider.getUriForFile(requireContext(), "com.personal.financetracker.provider", file)
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/csv"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            startActivity(Intent.createChooser(intent, "Export CSV"))
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Export failed: ${e.message}", Toast.LENGTH_SHORT).show()
+    private fun toggleSearch(show: Boolean) {
+        binding.searchBar.visible(show)
+        binding.headerRow.visible(!show)
+        if (show) {
+            binding.etSearch.requestFocus()
+            (requireContext().getSystemService(InputMethodManager::class.java))
+                ?.showSoftInput(binding.etSearch, InputMethodManager.SHOW_IMPLICIT)
+        } else {
+            binding.etSearch.setText("")
+            (requireContext().getSystemService(InputMethodManager::class.java))
+                ?.hideSoftInputFromWindow(binding.etSearch.windowToken, 0)
         }
     }
 
-    private fun readAndImport(uri: Uri) {
-        try {
-            val content = requireContext().contentResolver
-                .openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-            if (content.isNullOrBlank()) {
-                Toast.makeText(requireContext(), "File is empty", Toast.LENGTH_SHORT).show()
-                return
-            }
-            viewModel.importCsv(content) { result -> showImportSummary(result) }
-        } catch (e: Exception) {
-            Toast.makeText(requireContext(), "Import failed: ${e.message}", Toast.LENGTH_LONG).show()
+    private fun showMenu() {
+        val pm = PopupMenu(requireContext(), binding.btnMore)
+        pm.menu.add(0, 0, 0, getString(R.string.export_csv))
+        pm.menu.add(0, 1, 1, getString(R.string.import_csv))
+        pm.setOnMenuItemClickListener {
+            if (it.itemId == 0) csv.export() else csv.pickAndImport(); true
         }
+        pm.show()
     }
 
-    private fun showImportSummary(result: TransactionsViewModel.ImportResult) {
-        if (_binding == null) return
-        val msg = buildString {
-            append("Imported ${resources.getQuantityString(R.plurals.transaction_count, result.imported, result.imported)}.")
-            if (result.newCategories > 0) {
-                append("\nAdded ${resources.getQuantityString(R.plurals.category_count, result.newCategories, result.newCategories)}.")
-            }
-            if (result.skipped > 0) {
-                append("\nSkipped ${resources.getQuantityString(R.plurals.row_count, result.skipped, result.skipped)} that couldn't be read.")
-            }
-        }
-        AlertDialog.Builder(requireContext())
-            .setTitle("Import complete")
-            .setMessage(msg)
-            .setPositiveButton("OK", null)
+    private fun openTransaction(tx: Transaction) {
+        findNavController().navigate(R.id.action_global_add, Bundle().apply { putLong("transactionId", tx.id) })
+    }
+
+    private fun deleteWithUndo(tx: Transaction) {
+        viewModel.delete(tx)
+        Snackbar.make(binding.root, R.string.transaction_deleted, Snackbar.LENGTH_LONG)
+            .setAnchorView(binding.fabAdd)
+            .setAction(R.string.undo) { viewModel.restore(tx) }
             .show()
     }
 
-    private fun confirmDelete(tx: Transaction) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Delete transaction?")
-            .setMessage("This cannot be undone.")
-            .setPositiveButton("Delete") { _, _ -> viewModel.delete(tx) }
-            .setNegativeButton("Cancel", null)
-            .show()
+    /** Swipe a row left to delete it (with undo). Headers can't be swiped. */
+    private inner class SwipeToDelete : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+        private val bg = ContextCompat.getDrawable(requireContext(), R.drawable.swipe_delete_bg)!!
+        private val icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_delete)!!
+
+        override fun getSwipeDirs(rv: RecyclerView, vh: RecyclerView.ViewHolder): Int =
+            if (vh.itemViewType == TransactionSectionAdapter.TYPE_ITEM) super.getSwipeDirs(rv, vh) else 0
+
+        override fun onMove(rv: RecyclerView, vh: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder) = false
+
+        override fun onSwiped(vh: RecyclerView.ViewHolder, direction: Int) {
+            adapter.transactionAt(vh.bindingAdapterPosition)?.let { deleteWithUndo(it) }
+        }
+
+        override fun onChildDraw(c: Canvas, rv: RecyclerView, vh: RecyclerView.ViewHolder, dX: Float, dY: Float, state: Int, active: Boolean) {
+            val v = vh.itemView
+            if (dX < 0) {
+                bg.setBounds(v.right + dX.toInt(), v.top, v.right, v.bottom)
+                bg.draw(c)
+                val size = v.dp(22f).toInt()
+                val m = (v.height - size) / 2
+                icon.setBounds(v.right - m - size, v.top + m, v.right - m, v.bottom - m)
+                icon.setTint(0xFFFFFFFF.toInt())
+                icon.draw(c)
+            }
+            super.onChildDraw(c, rv, vh, dX, dY, state, active)
+        }
     }
 
     override fun onDestroyView() {

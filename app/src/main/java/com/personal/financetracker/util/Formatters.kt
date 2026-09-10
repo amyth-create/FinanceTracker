@@ -2,7 +2,11 @@ package com.personal.financetracker.util
 
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 object Formatters {
 
@@ -10,79 +14,66 @@ object Formatters {
         maximumFractionDigits = 2
         minimumFractionDigits = 2
     }
-
-    fun formatAmount(amount: Double): String =
-        currencyFormat.format(amount)
-
-    fun formatDate(timestamp: Long): String {
-        val sdf = SimpleDateFormat("d MMM yyyy", Locale.getDefault())
-        return sdf.format(Date(timestamp))
+    private val compactFormat = NumberFormat.getCurrencyInstance(Locale.GERMANY).apply {
+        maximumFractionDigits = 0
+        minimumFractionDigits = 0
     }
 
-    fun formatDateShort(timestamp: Long): String {
-        val sdf = SimpleDateFormat("d MMM", Locale.getDefault())
-        return sdf.format(Date(timestamp))
+    val currencySymbol: String = currencyFormat.currency?.symbol ?: "€"
+
+    fun formatAmount(amount: Double): String = currencyFormat.format(amount)
+
+    /** "€1.234" – for axis labels and dense rows */
+    fun formatCompact(amount: Double): String = when {
+        abs(amount) >= 1_000_000 -> "%.1fM %s".format(Locale.GERMANY, amount / 1_000_000, currencySymbol)
+        abs(amount) >= 10_000 -> "%.1fk %s".format(Locale.GERMANY, amount / 1_000, currencySymbol)
+        else -> compactFormat.format(amount)
     }
 
-    fun formatMonthYear(timestamp: Long): String {
-        val sdf = SimpleDateFormat("MMM yy", Locale.getDefault())
-        return sdf.format(Date(timestamp))
+    /** "+€12,00" / "−€12,00" */
+    fun formatSigned(amount: Double): String =
+        (if (amount >= 0) "+" else "−") + formatAmount(abs(amount))
+
+    /** "+12%" / "−8%" */
+    fun formatPct(fraction: Double): String =
+        (if (fraction >= 0) "+" else "−") + "${(abs(fraction) * 100).roundToInt()}%"
+
+    fun formatPctPlain(fraction: Double): String = "${(fraction * 100).roundToInt()}%"
+
+    fun formatDate(timestamp: Long): String =
+        SimpleDateFormat("d MMM yyyy", Locale.getDefault()).format(Date(timestamp))
+
+    fun formatDateShort(timestamp: Long): String =
+        SimpleDateFormat("d MMM", Locale.getDefault()).format(Date(timestamp))
+
+    fun formatWeekdayDate(timestamp: Long): String =
+        SimpleDateFormat("EEE d MMM", Locale.getDefault()).format(Date(timestamp))
+
+    /** "Today", "Yesterday", or "Mon 3 Jun" */
+    fun formatRelativeDay(timestamp: Long): String {
+        val now = Calendar.getInstance()
+        val then = Calendar.getInstance().apply { timeInMillis = timestamp }
+        val sameYear = now.get(Calendar.YEAR) == then.get(Calendar.YEAR)
+        val dayDiff = if (sameYear) now.get(Calendar.DAY_OF_YEAR) - then.get(Calendar.DAY_OF_YEAR) else Int.MAX_VALUE
+        return when (dayDiff) {
+            0 -> "Today"
+            1 -> "Yesterday"
+            else -> if (sameYear) formatWeekdayDate(timestamp) else formatDate(timestamp)
+        }
     }
 
-    fun startOfMonth(): Long {
-        val cal = Calendar.getInstance()
-        cal.set(Calendar.DAY_OF_MONTH, 1)
-        cal.set(Calendar.HOUR_OF_DAY, 0)
-        cal.set(Calendar.MINUTE, 0)
-        cal.set(Calendar.SECOND, 0)
-        cal.set(Calendar.MILLISECOND, 0)
-        return cal.timeInMillis
-    }
+    fun startOfDay(ts: Long): Long = Calendar.getInstance().apply {
+        timeInMillis = ts
+        set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
 
-    fun endOfMonth(): Long {
-        val cal = Calendar.getInstance()
-        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
-        cal.set(Calendar.HOUR_OF_DAY, 23)
-        cal.set(Calendar.MINUTE, 59)
-        cal.set(Calendar.SECOND, 59)
-        return cal.timeInMillis
+    fun greeting(): String {
+        val h = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        return when {
+            h < 5 -> "Good night"
+            h < 12 -> "Good morning"
+            h < 18 -> "Good afternoon"
+            else -> "Good evening"
+        }
     }
-
-    fun monthStartFor(year: Int, month: Int): Long {
-        val cal = Calendar.getInstance()
-        cal.set(year, month, 1, 0, 0, 0)
-        cal.set(Calendar.MILLISECOND, 0)
-        return cal.timeInMillis
-    }
-
-    fun monthEndFor(year: Int, month: Int): Long {
-        val cal = Calendar.getInstance()
-        cal.set(year, month, 1, 0, 0, 0)
-        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH))
-        cal.set(Calendar.HOUR_OF_DAY, 23)
-        cal.set(Calendar.MINUTE, 59)
-        cal.set(Calendar.SECOND, 59)
-        return cal.timeInMillis
-    }
-
-    fun currentMonthLabel(): String {
-        return SimpleDateFormat("MMMM", Locale.getDefault()).format(Date())
-    }
-
-    /** "Jun 26" style short label for a given year/month (month is 0-based). */
-    fun monthLabelShort(year: Int, month: Int): String {
-        val cal = Calendar.getInstance()
-        cal.set(year, month, 1, 0, 0, 0)
-        return SimpleDateFormat("MMM yy", Locale.getDefault()).format(cal.time)
-    }
-
-    /** "June 2026" style full label for a given year/month (month is 0-based). */
-    fun monthLabelFull(year: Int, month: Int): String {
-        val cal = Calendar.getInstance()
-        cal.set(year, month, 1, 0, 0, 0)
-        return SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(cal.time)
-    }
-
-    fun currentYear(): Int = Calendar.getInstance().get(Calendar.YEAR)
-    fun currentMonth(): Int = Calendar.getInstance().get(Calendar.MONTH)
 }

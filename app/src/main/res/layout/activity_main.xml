@@ -20,11 +20,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bottom_nav_bg"
-        android:elevation="10dp"
-        app:elevation="10dp"
+        app:elevation="0dp"
         app:labelVisibilityMode="labeled"
         app:itemIconTint="@color/nav_item_color"
         app:itemTextColor="@color/nav_item_color"
+        app:itemRippleColor="@color/accent_dim"
         app:menu="@menu/bottom_nav_menu"/>
-
 </LinearLayout>

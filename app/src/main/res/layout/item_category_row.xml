@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingVertical="10dp"
+    android:background="@drawable/row_ripple">
+
+    <TextView android:id="@+id/tv_emoji" style="@style/IconTile" android:layout_marginEnd="12dp"/>
+
+    <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="1" android:orientation="vertical">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/tv_name" style="@style/Text.BodyBold"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+                android:maxLines="1" android:ellipsize="end"/>
+            <TextView android:id="@+id/tv_amount" style="@style/Text.BodyBold"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+        <com.personal.financetracker.ui.common.RatioBarView android:id="@+id/bar"
+            android:layout_width="match_parent" android:layout_height="6dp"
+            android:layout_marginTop="7dp" android:layout_marginBottom="5dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/tv_sub" style="@style/Text.Muted"
+                android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"/>
+            <TextView android:id="@+id/tv_delta" style="@style/Text.Muted"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:textStyle="bold"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <ImageView android:layout_width="18dp" android:layout_height="18dp"
+        android:src="@drawable/ic_chevron_right" android:layout_marginStart="6dp"
+        android:alpha="0.35" android:contentDescription="@null"/>
+</LinearLayout>
