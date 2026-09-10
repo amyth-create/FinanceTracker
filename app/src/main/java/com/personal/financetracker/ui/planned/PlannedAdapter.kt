@@ -13,6 +13,7 @@ import com.personal.financetracker.data.PlannedPayment
 import com.personal.financetracker.databinding.ItemDateHeaderBinding
 import com.personal.financetracker.databinding.ItemPlannedBinding
 import com.personal.financetracker.ui.common.color
+import com.personal.financetracker.ui.common.pop
 import com.personal.financetracker.ui.common.tintTile
 import com.personal.financetracker.ui.common.visible
 import com.personal.financetracker.util.Formatters
@@ -75,7 +76,7 @@ class PlannedAdapter(
         b.tvTitle.paintFlags = if (p.isDone) b.tvTitle.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
         else b.tvTitle.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
         b.divider.visible(!row.last)
-        b.btnCheck.setOnClickListener { onToggle(p) }
+        b.btnCheck.setOnClickListener { b.btnCheck.pop(); onToggle(p) }
     }
 
     companion object {

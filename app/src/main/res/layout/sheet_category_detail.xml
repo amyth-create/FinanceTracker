@@ -41,6 +41,6 @@
             android:layout_marginTop="18dp" android:text="Transactions"/>
         <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_transactions"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:layout_marginTop="4dp" android:nestedScrollingEnabled="false"/>
+            android:layout_marginTop="4dp" android:nestedScrollingEnabled="false" android:layoutAnimation="@anim/layout_rise"/>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

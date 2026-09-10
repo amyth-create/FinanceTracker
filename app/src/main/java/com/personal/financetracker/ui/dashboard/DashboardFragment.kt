@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.google.android.material.transition.MaterialFadeThrough
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.personal.financetracker.R
@@ -25,6 +26,12 @@ class DashboardFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: DashboardViewModel by viewModels()
     private lateinit var adapter: TransactionAdapter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enterTransition = MaterialFadeThrough()
+        exitTransition = MaterialFadeThrough()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
@@ -60,11 +67,11 @@ class DashboardFragment : Fragment() {
         binding.periodPicker.bind(d.period)
 
         // Hero
-        binding.tvNet.text = Formatters.formatSigned(s.net)
-        binding.tvHeroIncome.text = Formatters.formatAmount(s.income)
-        binding.tvHeroExpense.text = Formatters.formatAmount(s.expense)
-        binding.tvBalance.text = Formatters.formatAmount(d.balance)
-        binding.barHero.fraction = if (s.income > 0) (s.expense / s.income).toFloat() else if (s.expense > 0) 1f else 0f
+        binding.tvNet.countTo(s.net) { Formatters.formatSigned(it) }
+        binding.tvHeroIncome.countTo(s.income) { Formatters.formatAmount(it) }
+        binding.tvHeroExpense.countTo(s.expense) { Formatters.formatAmount(it) }
+        binding.tvBalance.countTo(d.balance) { Formatters.formatAmount(it) }
+        binding.barHero.animateTo(if (s.income > 0) (s.expense / s.income).toFloat() else if (s.expense > 0) 1f else 0f)
         binding.tvHeroSub.text = when {
             s.income <= 0 && s.expense <= 0 -> "Nothing recorded yet this ${d.period.noun}"
             s.income <= 0 -> "No income recorded this ${d.period.noun}"
@@ -73,8 +80,8 @@ class DashboardFragment : Fragment() {
         }
 
         // Insight tiles
-        binding.tvDaily.text = Formatters.formatAmount(s.avgExpensePerDay)
-        binding.tvProjected.text = Formatters.formatAmount(s.projectedExpense)
+        binding.tvDaily.countTo(s.avgExpensePerDay) { Formatters.formatAmount(it) }
+        binding.tvProjected.countTo(s.projectedExpense) { Formatters.formatAmount(it) }
         binding.tvProjectedSub.text = if (d.period.isCurrent()) "month-end spend at this pace" else "total spent"
         val pct = Analytics.pctChange(s.expense, d.previous.expense)
         if (pct != null) {
@@ -99,9 +106,10 @@ class DashboardFragment : Fragment() {
             row.tvAmount.text = Formatters.formatAmount(c.amount)
             row.tvPct.text = Formatters.formatPctPlain(c.share)
             row.bar.barColor = parseColor(c.color)
-            row.bar.fraction = if (max > 0) (c.amount / max).toFloat() else 0f
             binding.llCategories.addView(row.root)
+            row.bar.animateTo(if (max > 0) (c.amount / max).toFloat() else 0f, delay = 60L * binding.llCategories.childCount)
         }
+        binding.llCategories.staggerChildren()
 
         // Upcoming
         binding.llUpcoming.removeAllViews()

@@ -24,7 +24,22 @@ class SankeyView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     var data: SankeyData? = null
-        set(v) { field = v; requestLayout(); invalidate() }
+        set(v) { field = v; requestLayout(); reveal() }
+
+    /** 0..1 – ribbons and nodes are revealed left-to-right when data changes. */
+    private var progress = 1f
+    private var animator: android.animation.ValueAnimator? = null
+
+    private fun reveal() {
+        animator?.cancel()
+        if (!isAttachedToWindow) { progress = 1f; invalidate(); return }
+        animator = android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 900
+            interpolator = Anim.decel
+            addUpdateListener { progress = it.animatedValue as Float; invalidate() }
+            start()
+        }
+    }
 
     private val nodePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val ribbonPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -58,6 +73,8 @@ class SankeyView @JvmOverloads constructor(
         if (d.sources.isEmpty() && d.targets.isEmpty()) return
         val w = width.toFloat(); val h = height.toFloat()
         val top = dp(12f); val usable = h - dp(24f)
+        // Reveal sweep: clip everything to the right of the progress edge
+        if (progress < 1f) canvas.clipRect(0f, 0f, w * progress, h)
 
         val leftX = labelWidth
         val rightX = w - labelWidth - nodeWidth

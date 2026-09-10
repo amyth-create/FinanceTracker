@@ -1,42 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- LIGHT palette ("Paper"). The dark palette lives in values-night/colors.xml with the same names. -->
 <resources>
     <!-- Surfaces -->
-    <color name="bg">#0B0B10</color>
-    <color name="bg_card">#15151D</color>
-    <color name="bg_elevated">#1E1E2A</color>
-    <color name="bg_hover">#26263A</color>
+    <color name="bg">#F4F5FB</color>
+    <color name="bg_card">#FFFFFF</color>
+    <color name="bg_elevated">#EEF0F9</color>
+    <color name="bg_hover">#E2E5F4</color>
 
-    <!-- Brand accent (teal) -->
-    <color name="accent">#1FC8A8</color>
-    <color name="accent_dark">#0E8C73</color>
-    <color name="accent_dim">#221FC8A8</color>
-    <color name="accent_soft">#3A1FC8A8</color>
-    <color name="on_accent">#04261E</color>
+    <!-- Brand accent (indigo) -->
+    <color name="accent">#5B4BE0</color>
+    <color name="accent_dark">#3F32B8</color>
+    <color name="accent_dim">#1F5B4BE0</color>
+    <color name="accent_soft">#335B4BE0</color>
+    <color name="on_accent">#FFFFFF</color>
 
     <!-- Semantic -->
-    <color name="income">#2DD4A0</color>
-    <color name="income_dim">#1F2DD4A0</color>
-    <color name="expense">#FF5C7A</color>
-    <color name="expense_dim">#1FFF5C7A</color>
-    <color name="warning">#F0B429</color>
-    <color name="warning_dim">#1FF0B429</color>
-    <color name="info">#4A9EFF</color>
+    <color name="income">#0F9F6E</color>
+    <color name="income_dim">#1F0F9F6E</color>
+    <color name="expense">#E0405A</color>
+    <color name="expense_dim">#1FE0405A</color>
+    <color name="warning">#D98A06</color>
+    <color name="warning_dim">#1FD98A06</color>
+    <color name="info">#0284C7</color>
 
     <!-- Text -->
-    <color name="text_primary">#F2F1EC</color>
-    <color name="text_secondary">#9A97A8</color>
-    <color name="text_muted">#5C5A6C</color>
-    <color name="text_faint">#3A3948</color>
+    <color name="text_primary">#14162A</color>
+    <color name="text_secondary">#5C6180</color>
+    <color name="text_muted">#8B90AD</color>
+    <color name="text_faint">#C5C8DA</color>
 
     <!-- Lines -->
-    <color name="border">#20202C</color>
-    <color name="border_light">#2C2C3C</color>
-    <color name="grid">#1B1B26</color>
+    <color name="border">#E6E8F1</color>
+    <color name="border_light">#D6D9E8</color>
+    <color name="grid">#ECEEF6</color>
+
+    <!-- Hero card (always the indigo gradient, in both modes) -->
+    <color name="hero_start">#7B6CFF</color>
+    <color name="hero_mid">#5646E0</color>
+    <color name="hero_end">#2B2470</color>
+    <color name="on_hero">#FFFFFF</color>
+    <color name="on_hero_muted">#DAD6FF</color>
+    <color name="hero_inner">#26000000</color>
 
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="transparent">#00000000</color>
 
     <!-- Chart series -->
-    <color name="series_prev">#4A4859</color>
+    <color name="series_prev">#B4B8CF</color>
 </resources>

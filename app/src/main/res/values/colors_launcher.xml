@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fixed (not theme-dependent) launcher colours -->
+    <color name="launcher_bg">#3F32B8</color>
+</resources>

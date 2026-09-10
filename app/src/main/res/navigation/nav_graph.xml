@@ -13,9 +13,7 @@
         android:name="com.personal.financetracker.ui.dashboard.DashboardFragment"
         android:label="Home">
         <action android:id="@+id/action_dashboard_to_settings"
-            app:destination="@id/settings"
-            app:enterAnim="@anim/fade_in" app:exitAnim="@anim/fade_out"
-            app:popEnterAnim="@anim/fade_in" app:popExitAnim="@anim/fade_out"/>
+            app:destination="@id/settings"/>
     </fragment>
 
     <fragment android:id="@+id/transactions"
@@ -34,9 +32,7 @@
         android:name="com.personal.financetracker.ui.settings.SettingsFragment"
         android:label="Settings">
         <action android:id="@+id/action_settings_to_categories"
-            app:destination="@id/categories"
-            app:enterAnim="@anim/fade_in" app:exitAnim="@anim/fade_out"
-            app:popEnterAnim="@anim/fade_in" app:popExitAnim="@anim/fade_out"/>
+            app:destination="@id/categories"/>
     </fragment>
 
     <fragment android:id="@+id/categories"

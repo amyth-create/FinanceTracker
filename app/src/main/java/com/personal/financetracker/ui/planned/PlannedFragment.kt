@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.google.android.material.transition.MaterialFadeThrough
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -40,6 +41,12 @@ class PlannedFragment : Fragment() {
 
     private val notifPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enterTransition = MaterialFadeThrough()
+        exitTransition = MaterialFadeThrough()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentPlannedBinding.inflate(inflater, container, false)
@@ -69,7 +76,9 @@ class PlannedFragment : Fragment() {
                 rows.add(PlannedRow.Header(getString(R.string.planned_done), done.size))
                 done.forEachIndexed { i, p -> rows.add(PlannedRow.Item(p, i == done.lastIndex)) }
             }
+            val firstLoad = adapter.itemCount == 0 && rows.isNotEmpty()
             adapter.submitList(rows)
+            if (firstLoad) binding.rvPlanned.scheduleLayoutAnimation()
             val out = upcoming.filter { it.type == "expense" }.sumOf { it.amount }
             val inc = upcoming.filter { it.type == "income" }.sumOf { it.amount }
             binding.tvPlannedTotal.text = Formatters.formatAmount(out)

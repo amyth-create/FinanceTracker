@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- DARK palette ("Midnight"). Same names as values/colors.xml. -->
+<resources>
+    <color name="bg">#0C0E1A</color>
+    <color name="bg_card">#151829</color>
+    <color name="bg_elevated">#1E2238</color>
+    <color name="bg_hover">#2A2F4A</color>
+
+    <color name="accent">#8B7CFF</color>
+    <color name="accent_dark">#5B4BE0</color>
+    <color name="accent_dim">#268B7CFF</color>
+    <color name="accent_soft">#408B7CFF</color>
+    <color name="on_accent">#FFFFFF</color>
+
+    <color name="income">#34D399</color>
+    <color name="income_dim">#2634D399</color>
+    <color name="expense">#FF6B7A</color>
+    <color name="expense_dim">#26FF6B7A</color>
+    <color name="warning">#FBBF24</color>
+    <color name="warning_dim">#26FBBF24</color>
+    <color name="info">#38BDF8</color>
+
+    <color name="text_primary">#F3F4FB</color>
+    <color name="text_secondary">#9EA3C2</color>
+    <color name="text_muted">#626890</color>
+    <color name="text_faint">#3B4060</color>
+
+    <color name="border">#20243A</color>
+    <color name="border_light">#2C3150</color>
+    <color name="grid">#1B1F33</color>
+
+    <color name="hero_start">#6D5DF6</color>
+    <color name="hero_mid">#4B3FD1</color>
+    <color name="hero_end">#1B1D3F</color>
+    <color name="on_hero">#FFFFFF</color>
+    <color name="on_hero_muted">#D6D2FF</color>
+    <color name="hero_inner">#33000000</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="transparent">#00000000</color>
+
+    <color name="series_prev">#4B5070</color>
+</resources>

@@ -35,13 +35,13 @@
                 android:orientation="vertical" android:padding="22dp" android:background="@drawable/hero_gradient"
                 android:layout_marginBottom="@dimen/row_gap">
                 <TextView style="@style/Text.Overline" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:text="@string/this_period_net" android:textColor="#B6E9DD"/>
+                    android:text="@string/this_period_net" android:textColor="@color/on_hero_muted"/>
                 <TextView android:id="@+id/tv_net" style="@style/Text.Hero"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:textColor="@color/white" android:layout_marginTop="6dp" android:text="@string/empty_amount"/>
+                    android:textColor="@color/on_hero" android:layout_marginTop="6dp" android:text="@string/empty_amount"/>
                 <TextView android:id="@+id/tv_hero_sub" style="@style/Text.Caption"
                     android:layout_width="wrap_content" android:layout_height="wrap_content"
-                    android:textColor="#B6E9DD" android:layout_marginTop="6dp"/>
+                    android:textColor="@color/on_hero_muted" android:layout_marginTop="6dp"/>
                 <com.personal.financetracker.ui.common.RatioBarView android:id="@+id/bar_hero"
                     android:layout_width="match_parent" android:layout_height="8dp" android:layout_marginTop="16dp"/>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -49,26 +49,26 @@
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                         android:orientation="vertical" android:background="@drawable/hero_inner" android:padding="12dp" android:layout_marginEnd="5dp">
                         <TextView style="@style/Text.Label" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="↑ Income" android:textColor="#B6E9DD"/>
+                            android:text="↑ Income" android:textColor="@color/on_hero_muted"/>
                         <TextView android:id="@+id/tv_hero_income" style="@style/Text.BodyBold"
                             android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textColor="@color/white" android:textSize="15sp" android:layout_marginTop="3dp"/>
+                            android:textColor="@color/on_hero" android:textSize="15sp" android:layout_marginTop="3dp"/>
                     </LinearLayout>
                     <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
                         android:orientation="vertical" android:background="@drawable/hero_inner" android:padding="12dp" android:layout_marginStart="5dp">
                         <TextView style="@style/Text.Label" android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:text="↓ Spent" android:textColor="#B6E9DD"/>
+                            android:text="↓ Spent" android:textColor="@color/on_hero_muted"/>
                         <TextView android:id="@+id/tv_hero_expense" style="@style/Text.BodyBold"
                             android:layout_width="wrap_content" android:layout_height="wrap_content"
-                            android:textColor="@color/white" android:textSize="15sp" android:layout_marginTop="3dp"/>
+                            android:textColor="@color/on_hero" android:textSize="15sp" android:layout_marginTop="3dp"/>
                     </LinearLayout>
                 </LinearLayout>
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
                     android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="14dp">
                     <TextView style="@style/Text.Caption" android:layout_width="0dp" android:layout_height="wrap_content"
-                        android:layout_weight="1" android:text="@string/total_balance" android:textColor="#B6E9DD"/>
+                        android:layout_weight="1" android:text="@string/total_balance" android:textColor="@color/on_hero_muted"/>
                     <TextView android:id="@+id/tv_balance" style="@style/Text.BodyBold"
-                        android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/white"/>
+                        android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/on_hero"/>
                 </LinearLayout>
             </LinearLayout>
 

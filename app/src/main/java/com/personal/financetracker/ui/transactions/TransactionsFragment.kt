@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.google.android.material.transition.MaterialFadeThrough
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -30,6 +31,12 @@ class TransactionsFragment : Fragment() {
     private val viewModel: TransactionsViewModel by viewModels()
     private lateinit var adapter: TransactionSectionAdapter
     private val csv = CsvActions(this)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enterTransition = MaterialFadeThrough()
+        exitTransition = MaterialFadeThrough()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentTransactionsBinding.inflate(inflater, container, false)
@@ -58,10 +65,12 @@ class TransactionsFragment : Fragment() {
         viewModel.listing.observe(viewLifecycleOwner) { l ->
             val lm = binding.rvTransactions.layoutManager as LinearLayoutManager
             val wasAtTop = lm.findFirstCompletelyVisibleItemPosition() <= 1
+            val firstLoad = adapter.itemCount == 0 && l.rows.isNotEmpty()
             adapter.submitList(l.rows) {
                 // Keep a freshly added (newest) transaction visible instead of anchoring to the old first row
                 if (wasAtTop && _binding != null) binding.rvTransactions.scrollToPosition(0)
             }
+            if (firstLoad) binding.rvTransactions.scheduleLayoutAnimation()
             binding.tvCount.text = resources.getQuantityString(R.plurals.transaction_count, l.count, l.count)
             val empty = l.count == 0
             binding.emptyState.visible(empty)

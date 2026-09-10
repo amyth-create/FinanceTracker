@@ -19,6 +19,8 @@ Built as a personal project with the help of Google Gemini; v2 redesign done wit
 - **Planned** — plan a future payment and **tick it off when paid**; that logs a real transaction dated today. Upcoming and done sections, relative due dates ("Tomorrow", "In 5 days", "Overdue"), swipe to delete with undo.
 - **Reminders** — a notification on the morning of a planned payment's date (survives reboots).
 - **Settings** — manage categories (emoji, name and a **colour palette**), export/import CSV, and app info.
+- **Light & dark themes** — follows the system setting. Indigo accent, emerald income, coral spending; "Paper" light palette and "Midnight" dark palette.
+- **Motion** — fade-through screen transitions, a sliding tab indicator, amounts that count up, bars and the Sankey that sweep in, staggered rows and list entrances. Everything respects the system animation-scale setting.
 - **Offline-first** — everything is stored locally in `finance_tracker.db`; no internet permission, no ads, no tracking.
 
 ---
@@ -72,7 +74,7 @@ app/src/main/
 │   ├── notify/                     Planned-payment reminders (AlarmManager + boot receiver)
 │   ├── ui/
 │   │   ├── MainActivity.kt         Bottom nav host; hides nav on full-screen pages
-│   │   ├── common/                 PeriodPickerView, SegmentedControl, RatioBarView, StackedBarView, SankeyView, chart styling
+│   │   ├── common/                 PeriodPickerView, SegmentedControl, RatioBarView, StackedBarView, SankeyView, chart styling, Anim helpers
 │   │   ├── dashboard/              Home + ViewModel
 │   │   ├── transactions/           Activity list, adapters, search + swipe delete
 │   │   ├── add/                    Add/edit transaction
@@ -84,7 +86,8 @@ app/src/main/
 ├── res/
 │   ├── layout/                     Screens, report sections, list rows
 │   ├── drawable/                   Vector icons + shapes
-│   ├── values/                     colors, dimens, strings, themes (typography + component styles)
+│   ├── values/                     light colors, dimens, strings, themes (typography + component styles)
+│   ├── values-night/               dark colors
 │   └── navigation/nav_graph.xml
 └── test/                           JUnit tests for Period and Analytics
 ```
@@ -102,7 +105,7 @@ Out of the box this renders amounts as Euros (€). Change the `Locale` to suit 
 
 **Default categories.** Edit `defaultExpenseCategories` and `defaultIncomeCategories` in `data/Category.kt`. They are seeded when the database is first created, so to re-seed wipe app data or uninstall and reinstall.
 
-**Theme & colours.** Tweak `res/values/colors.xml` and `res/values/themes.xml`.
+**Theme & colours.** The light palette lives in `res/values/colors.xml` and the dark palette in `res/values-night/colors.xml` (same names, so every screen adapts automatically). Typography and component styles are in `res/values/themes.xml`. Animation timings live in `ui/common/Anim.kt`.
 
 ---
 

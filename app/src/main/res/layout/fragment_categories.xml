@@ -23,7 +23,7 @@
 
     <androidx.recyclerview.widget.RecyclerView android:id="@+id/rv_categories"
         android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
-        android:paddingHorizontal="@dimen/screen_padding" android:clipToPadding="false" android:paddingBottom="16dp"/>
+        android:paddingHorizontal="@dimen/screen_padding" android:clipToPadding="false" android:paddingBottom="16dp" android:layoutAnimation="@anim/layout_rise"/>
 
     <com.google.android.material.button.MaterialButton android:id="@+id/btn_add_category" style="@style/GhostButton"
         android:layout_width="match_parent" android:layout_height="52dp"

@@ -25,7 +25,18 @@ class PeriodPickerView @JvmOverloads constructor(
         b.tvLabel.setOnClickListener { onLabelClick?.invoke() }
     }
 
+    private var last: Period? = null
+
     fun bind(period: Period) {
+        val prev = last
+        last = period
+        if (prev != null && prev != period && isAttachedToWindow) {
+            // Slide the label in from the side we're moving towards
+            val dir = if (period.start > prev.start) 1f else -1f
+            b.tvLabel.animate().cancel()
+            b.tvLabel.translationX = dir * dp(22f); b.tvLabel.alpha = 0f
+            b.tvLabel.animate().translationX(0f).alpha(1f).setDuration(Anim.NORMAL).setInterpolator(Anim.decel).start()
+        }
         b.tvLabel.text = period.label
         b.tvSub.text = if (period.isCurrent()) "Current ${period.noun}" else ""
         b.tvSub.visible(period.isCurrent())

@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import com.google.android.material.transition.MaterialFadeThrough
 import androidx.navigation.fragment.findNavController
 import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.data.*
@@ -40,6 +41,13 @@ class ReportsFragment : Fragment() {
     private val cf: SectionCashflowBinding get() = binding.cashflow
 
     private var data: ReportData? = null
+    private var tabChanged = true
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enterTransition = MaterialFadeThrough()
+        exitTransition = MaterialFadeThrough()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentReportsBinding.inflate(inflater, container, false)
@@ -56,7 +64,7 @@ class ReportsFragment : Fragment() {
         binding.btnCompare.setOnClickListener { showCompareMenu() }
 
         binding.tabs.select(viewModel.tab)
-        binding.tabs.onSelected = { i -> viewModel.tab = i; data?.let { render(it) } }
+        binding.tabs.onSelected = { i -> viewModel.tab = i; tabChanged = true; data?.let { render(it) } }
 
         viewModel.queryLive.observe(viewLifecycleOwner) { q ->
             binding.periodPicker.bind(q.period)
@@ -106,6 +114,10 @@ class ReportsFragment : Fragment() {
             1 -> if (!showEmpty) renderBreakdown(d, TYPE_INCOME)
             else -> renderCashFlow(d)
         }
+        if (tabChanged) {
+            tabChanged = false
+            (if (tab == 2) binding.cashflow.root else binding.breakdown.root).staggerChildren(step = 60)
+        }
     }
 
     private fun renderBreakdown(d: ReportData, type: String) {
@@ -116,7 +128,7 @@ class ReportsFragment : Fragment() {
         val accent = requireContext().color(if (isExpense) R.color.expense else R.color.income)
 
         bd.tvTotalLabel.text = getString(if (isExpense) R.string.total_spent else R.string.total_income)
-        bd.tvTotal.text = Formatters.formatAmount(total)
+        bd.tvTotal.countTo(total) { Formatters.formatAmount(it) }
 
         val diff = total - cmpTotal
         val pct = Analytics.pctChange(total, cmpTotal)
@@ -215,7 +227,7 @@ class ReportsFragment : Fragment() {
             row.tvName.text = c.name
             row.tvAmount.text = Formatters.formatAmount(c.amount)
             row.bar.barColor = parseColor(c.color)
-            row.bar.fraction = if (max > 0) (c.amount / max).toFloat() else 0f
+            row.bar.animateTo(if (max > 0) (c.amount / max).toFloat() else 0f, delay = 50L * bd.llCategories.childCount)
             row.tvSub.text = "${resources.getQuantityString(R.plurals.transaction_count, c.count, c.count)} · ${Formatters.formatPctPlain(c.share)}"
             when {
                 c.isNew -> { row.tvDelta.text = getString(R.string.category_new); row.tvDelta.setTextColor(requireContext().color(R.color.text_muted)) }
@@ -229,6 +241,7 @@ class ReportsFragment : Fragment() {
             row.root.setOnClickListener { CategoryDetailSheet.show(childFragmentManager, c.name, type) }
             bd.llCategories.addView(row.root)
         }
+        bd.llCategories.staggerChildren(step = 40)
     }
 
     // ---------- Pace ----------
@@ -272,7 +285,7 @@ class ReportsFragment : Fragment() {
                 override fun getFormattedValue(value: Float) = "d${value.toInt()}"
             }
             highlightValues(null)
-            invalidate()
+            animateX(700)
         }
     }
 
@@ -329,7 +342,7 @@ class ReportsFragment : Fragment() {
     private fun renderCashFlow(d: ReportData) {
         val ctx = requireContext()
         val s = d.summary; val c = d.compareSummary
-        cf.tvNet.text = Formatters.formatSigned(s.net)
+        cf.tvNet.countTo(s.net) { Formatters.formatSigned(it) }
         cf.tvNet.setTextColor(ctx.color(if (s.net >= 0) R.color.text_primary else R.color.expense))
         val rate = s.savingsRate
         cf.tvSavings.text = when {
@@ -347,11 +360,12 @@ class ReportsFragment : Fragment() {
         cf.tvNetDelta.applyDeltaColor(netDiff, higherIsGood = true)
         cf.barFlow.barColor = ctx.color(if (s.expense <= s.income) R.color.expense else R.color.expense)
         cf.barFlow.trackColor = ctx.color(R.color.income_dim)
-        cf.barFlow.fraction = if (s.income > 0) (s.expense / s.income).toFloat() else if (s.expense > 0) 1f else 0f
+        cf.barFlow.animateTo(if (s.income > 0) (s.expense / s.income).toFloat() else if (s.expense > 0) 1f else 0f)
         cf.tvFlowIncome.text = Formatters.formatAmount(s.income)
         cf.tvFlowExpense.text = Formatters.formatAmount(s.expense)
 
-        cf.sankey.data = d.sankey
+        val accentHex = String.format("#%06X", 0xFFFFFF and ctx.color(R.color.accent))
+        cf.sankey.data = d.sankey.copy(targets = d.sankey.targets.map { if (it.label == "Saved") it.copy(color = accentHex) else it })
         val sankeyEmpty = d.sankey.sources.isEmpty() && d.sankey.targets.isEmpty()
         cf.sankey.visible(!sankeyEmpty)
         cf.tvSankeySub.text = when {
@@ -416,7 +430,7 @@ class ReportsFragment : Fragment() {
             xAxis.valueFormatter = IndexAxisValueFormatter(pts.map { it.first.mediumLabel })
             xAxis.labelCount = minOf(5, pts.size)
             highlightValues(null)
-            invalidate()
+            animateX(900)
             setOnChartValueSelectedListener(object : OnChartValueSelectedListener {
                 override fun onValueSelected(e: Entry?, h: Highlight?) {
                     val i = e?.x?.toInt() ?: return
