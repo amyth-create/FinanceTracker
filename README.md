@@ -6,6 +6,13 @@ Built as a personal project with the help of Google Gemini; v2 redesign done wit
 
 ---
 
+<p align="center">
+  <img src="docs/screenshots/home.png" width="200" alt="Home">&nbsp;
+  <img src="docs/screenshots/reports_spending.png" width="200" alt="Reports – spending">&nbsp;
+  <img src="docs/screenshots/reports_cashflow.png" width="200" alt="Reports – cash flow">&nbsp;
+  <img src="docs/screenshots/light_home.png" width="200" alt="Home in light mode">
+</p>
+
 ## Features
 
 - **Home** — greeting, a **month picker** (‹ › arrows), and a hero card with net for the month, income vs. spent with a spend-to-income bar, and your all-time balance. Below it: daily average, projected month-end spend, spending change vs. last month, top category, the top spending categories with bars, **upcoming planned payments** (next 30 days), **detected recurring payments**, and recent transactions.
@@ -42,16 +49,135 @@ Built as a personal project with the help of Google Gemini; v2 redesign done wit
 
 ---
 
-## Screens
+## How to use the app
 
-The app is a single Activity with bottom navigation between four destinations, plus three full-screen pages reached from them:
+The app has four tabs along the bottom: **Home**, **Activity**, **Reports** and **Planned**. The **+** button on Home and Activity adds a transaction; the gear on Home opens Settings. Everything below shows the dark theme unless noted; the app follows your phone's light/dark setting automatically.
 
-- `DashboardFragment` (Home) — month picker, hero, insight tiles, top categories, upcoming, recurring, recent
-- `TransactionsFragment` (Activity) — searchable, filterable history with swipe-to-delete
-- `ReportsFragment` — Spending / Income / Cash flow tabs, period + comparison controls, `CategoryDetailSheet` drill-down
-- `PlannedFragment` — future payments you can tick off into real transactions
-- `AddTransactionFragment` — add or edit a transaction (opened from any + button or by tapping a row)
-- `SettingsFragment` → `CategoriesFragment` — category management and CSV import/export
+### 1. Home — the month at a glance
+
+| | |
+|:--:|:--:|
+| <img src="docs/screenshots/home.png" width="260"> | <img src="docs/screenshots/home2.png" width="260"> |
+| Month picker, net for the month and total balance | Scroll for top categories, upcoming and recurring |
+
+- Use **‹ ›** to move between months. The hero card shows the month's **net** (income minus spending), a bar of how much of your income you have spent, income and spent totals, and your **all-time balance** at the bottom.
+- The four tiles show the **daily average**, the **projected** month-end spend at the current pace, the **spending change** vs. last month, and the **top category**.
+- **Spending by category** lists your biggest categories with bars; tap **Reports →** for the full breakdown.
+- **Upcoming** shows planned payments due in the next 30 days. **Recurring & subscriptions** appears when the app detects the same payment in three or more months.
+- **Recent** shows the last five transactions; tap one to edit it.
+
+### 2. Adding a transaction
+
+| | |
+|:--:|:--:|
+| <img src="docs/screenshots/add.png" width="260"> | |
+| Add or edit a transaction | |
+
+1. Tap **+** on Home or Activity.
+2. Choose **Expense** or **Income** at the top.
+3. Type the **amount**.
+4. Tap a **category** chip. (Categories are managed in Settings, see below.)
+5. Pick the **date**: *Today*, *Yesterday*, or *Pick…* for a calendar.
+6. Optionally write a **note** (for example "dinner" or "Lisbon flight"). Notes are searchable and power the "Top places & notes" report.
+7. Tap **Save expense** / **Save income**.
+
+Tapping any transaction anywhere in the app opens the same screen to **edit** it; a trash icon at the top right deletes it.
+
+### 3. Activity — your full history
+
+| | |
+|:--:|:--:|
+| <img src="docs/screenshots/activity.png" width="260"> | <img src="docs/screenshots/activity_search.png" width="260"> |
+| Grouped by day with a per-day net | Search by note or category |
+
+- Transactions are grouped under **day headers** ("Today", "Yesterday", "Wed 17 Jun") with the day's net total on the right.
+- Use the **All / Expenses / Income** chips to filter, and the **magnifier** to search notes and category names.
+- **Swipe a row to the left** to delete it. An **Undo** bar appears for a few seconds.
+- The **⋮** menu holds **Export CSV** and **Import CSV** (see "Data" below).
+
+### 4. Reports — where the money goes
+
+Reports are built around a period and a comparison. Pick the **period** with ‹ ›; tap the period label to switch between **Month, Quarter and Year**. Use the pill at the top right to compare against the **previous period** or the **same period last year**. Every number and chart in the tab uses that choice.
+
+| | |
+|:--:|:--:|
+| <img src="docs/screenshots/reports_period_menu.png" width="260"> | <img src="docs/screenshots/reports_compare_menu.png" width="260"> |
+| Tap the period label to switch month / quarter / year | Choose what to compare against |
+
+#### Spending and Income tabs
+
+| | | |
+|:--:|:--:|:--:|
+| <img src="docs/screenshots/reports_spending.png" width="200"> | <img src="docs/screenshots/reports_categories.png" width="200"> | <img src="docs/screenshots/category_sheet.png" width="200"> |
+| Total, change and averages, then the trend | By category with change per category | Tap a category to drill in |
+
+- The **top card** shows the total for the period, the ▲/▼ change against the comparison period, and per-day / per-transaction averages.
+- **Trend** shows the last six periods with a dashed line at your average. **Tap a bar to jump to that period.**
+- **By category** shows a stacked share bar and one row per category with amount, transaction count, share, and change vs. the comparison period.
+- **Tap a category** to open its detail sheet: share of spending, count, average, change, a six-period history, and every transaction in that category (tap one to edit).
+
+| | | |
+|:--:|:--:|:--:|
+| <img src="docs/screenshots/reports_pace.png" width="200"> | <img src="docs/screenshots/reports_notes.png" width="200"> | <img src="docs/screenshots/reports_income.png" width="200"> |
+| Spending pace vs. the previous month | Day of week, top notes, largest transactions | The Income tab works the same way |
+
+- **Spending pace** plots how spending accumulated day by day this period (solid) against the comparison period (dashed), so you can see early in the month whether you are ahead or behind.
+- **By day of week** shows your average spend on each weekday.
+- **Top places & notes** groups transactions by note, and **Largest transactions** lists the biggest single items.
+
+#### Cash flow tab
+
+| | |
+|:--:|:--:|
+| <img src="docs/screenshots/reports_cashflow.png" width="260"> | <img src="docs/screenshots/reports_cashflow2.png" width="260"> |
+| Net, savings rate and where the money went | Income vs. spending and balance over time |
+
+- The **top card** shows the net for the period, your **savings rate** (or how much you overspent), and an income-to-spending bar.
+- **Where the money went** is a Sankey diagram: income sources on the left flow into spending categories on the right, with a **Saved** node when you spent less than you earned.
+- **Income vs. spending** compares the two for the last 12 months (tap a bar for the numbers), and **Balance over time** shows your cumulative balance across your whole history.
+
+### 5. Planned — future payments and reminders
+
+| | |
+|:--:|:--:|
+| <img src="docs/screenshots/planned_dialog.png" width="260"> | <img src="docs/screenshots/planned.png" width="260"> |
+| Plan a payment | Upcoming payments, tick off when paid |
+
+1. Tap **+** and fill in the amount, what it is for, the date and a category.
+2. The payment appears under **Upcoming** with a relative due date ("Tomorrow", "In 7 days", "Overdue"), and on Home under Upcoming when it is within 30 days.
+3. On the morning of the due date you get a **notification** (allow notifications when asked; reminders survive a reboot).
+4. When you actually pay, **tap the circle** to tick it off. The app logs a real transaction dated today, so it flows into Activity and Reports. Un-tick to remove that transaction again.
+5. Swipe a row left to delete it (with undo).
+
+### 6. Settings — categories and data
+
+| | | |
+|:--:|:--:|:--:|
+| <img src="docs/screenshots/settings.png" width="200"> | <img src="docs/screenshots/categories.png" width="200"> | <img src="docs/screenshots/category_edit.png" width="200"> |
+| Settings | Manage categories | Emoji, name and colour |
+
+- **Categories**: switch between Expenses and Income, tap a row (or the pencil) to change its emoji, name or colour, and use **+ Add category** for your own. Default categories can be edited but not deleted; custom ones can be deleted and existing transactions keep their label.
+- **Export CSV** shares your full history as a `.csv` file (Date, Type, Amount, Category, Note) through the system share sheet.
+- **Import CSV** loads transactions from a `.csv` in the same format; unknown categories are created automatically and a summary tells you how many rows were imported or skipped.
+
+### Light mode
+
+| | | |
+|:--:|:--:|:--:|
+| <img src="docs/screenshots/light_home.png" width="200"> | <img src="docs/screenshots/light_reports.png" width="200"> | <img src="docs/screenshots/light_cashflow.png" width="200"> |
+
+The app follows the system theme: "Paper" in light mode and "Midnight" in dark mode.
+
+---
+
+## Building and running
+
+```bash
+./gradlew :app:assembleDebug        # builds app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:testDebugUnitTest    # runs the domain unit tests
+```
+
+Or open the folder in Android Studio and press Run. Requires JDK 17+ (Android Studio's bundled JDK works) and Android SDK 34.
 
 ---
 

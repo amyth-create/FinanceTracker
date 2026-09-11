@@ -112,17 +112,20 @@ class SankeyView @JvmOverloads constructor(
     }
 
     private fun labelPositions(rects: List<RectF>): List<Float> {
+        if (rects.isEmpty()) return emptyList()
         val step = rowMin
-        val out = ArrayList<Float>(rects.size)
+        val minY = dp(12f) + step / 2
+        val maxY = height - dp(12f) - step / 2
+        // Forward pass: each label sits at its node's centre, but never closer than one step to the previous.
+        val out = FloatArray(rects.size)
         var prev = -Float.MAX_VALUE
-        rects.forEach { r ->
-            val y = maxOf(r.centerY(), prev + step)
-            out.add(y); prev = y
+        rects.forEachIndexed { i, r -> out[i] = maxOf(r.centerY(), prev + step, minY); prev = out[i] }
+        // Backward pass: if the stack ran past the bottom, pack it upwards keeping the step.
+        if (out.last() > maxY) {
+            out[out.lastIndex] = maxY
+            for (i in out.lastIndex - 1 downTo 0) out[i] = minOf(out[i], out[i + 1] - step)
         }
-        // Keep the last label inside the view
-        val overflow = (out.lastOrNull() ?: 0f) + step / 2 - height
-        if (overflow > 0) for (i in out.indices) out[i] -= overflow
-        return out
+        return out.toList()
     }
 
     private fun layoutColumn(nodes: List<SankeyNode>, x: Float, top: Float, usable: Float, scaleTotal: Float): List<RectF> {
